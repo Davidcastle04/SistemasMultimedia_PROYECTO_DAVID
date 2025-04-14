@@ -29,7 +29,7 @@ class Musica {
     Label IndiceMusica = new Label("--:-- / --:--");
     JTextField Estado = null;
     MediaPlayer mediaPlayer;
-    CaratulaPanel caratulaPanel = new CaratulaPanel();
+    //CaratulaPanel caratulaPanel = new CaratulaPanel();
     JSlider jSlider1 = new JSlider(0, 100, 0);
     public void addMusica(File archivo) {
         listModel.addElement(archivo);
@@ -40,7 +40,7 @@ class Musica {
         Estado.setText("AUDIO " + archivo.getName());
         mediaPlayer.media().play(archivo.getAbsolutePath());
         jSlider1.setValue(0);
-        SwingUtilities.invokeLater(() -> caratulaPanel.setCaratula(archivo));
+        //SwingUtilities.invokeLater(() -> caratulaPanel.setCaratula(archivo));
 
        //Set Metadata
        mediaPlayer.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
