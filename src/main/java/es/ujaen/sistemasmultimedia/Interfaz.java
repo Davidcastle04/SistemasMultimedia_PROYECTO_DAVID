@@ -158,7 +158,7 @@ public class Interfaz extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MultiStudio");
-        setIconImage(new ImageIcon("../imagenes/logo.jpeg").getImage());
+        setIconImage(new ImageIcon("../imagenes/logo.jpg").getImage());
         setBackground(new java.awt.Color(153, 153, 153));
         setCursor(new java.awt.Cursor(Cursor.HAND_CURSOR));
 

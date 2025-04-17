@@ -1,5 +1,7 @@
 package es.ujaen.sistemasmultimedia;
 
+import es.ujaen.sistemasmultimedia.MULTIMEDIA.IMAGEN;
+
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
@@ -9,6 +11,7 @@ import java.io.File;
 
 public class UI extends JFrame {
 
+    boolean hayCambiosSinGuardar = false;
     JTextField ArchivoAbierto = new JTextField();
     private JPanel jPanel1 = new JPanel();
     private JTabbedPane jTabbedPane1 = new JTabbedPane();
@@ -16,18 +19,18 @@ public class UI extends JFrame {
     Multimedia.Musica1 musica = null;
     JSeparator jSeparator1 = new JSeparator();
     Label label3 = new Label();
-    Button examinarArchivoBoton = new Button();
+    JButton examinarArchivoBoton = new JButton();
     Panel panel1 = new Panel();
     Label label1 = new Label();
     JMenuBar jMenuBar1 = new JMenuBar();
-    JMenu jMenu1 = new JMenu();
-    JMenu jMenu5 = new JMenu();
-    JMenu jMenu6 = new JMenu();
-    JMenu jMenu7 = new JMenu();
-    JMenu jMenu8 = new JMenu();
-    JMenu jMenu9 = new JMenu();
-    JMenu jMenu13 = new JMenu();
-    JMenu jMenu14 = new JMenu();
+    JMenu M_Archivos = new JMenu();
+    JMenu Archivos_guardarFichero = new JMenu();
+    JMenuItem guardar_orig_sin_mod = new JMenuItem();
+    JMenuItem guardar_mod = new JMenuItem();
+    JMenuItem Archivos_abrirFichero = new JMenuItem();
+    JMenuItem Archicos_recientes = new JMenuItem();
+    JMenuItem Archivos_cargarPlaylist = new JMenuItem();
+    JMenuItem Archivos_cargarAlbum = new JMenuItem();
     JMenu jMenu17 = new JMenu();
     JMenu jMenu2 = new JMenu();
     JMenu jMenu10 = new JMenu();
@@ -35,11 +38,13 @@ public class UI extends JFrame {
     JMenu jMenu12 = new JMenu();
     JMenu jMenu15 = new JMenu();
     JMenu jMenu16 = new JMenu();
-    JMenu jMenu4 = new JMenu();
-    JMenu jMenu3 = new JMenu();
+    JMenu Ayuda = new JMenu();
+    JMenuItem abrirAyuda = new JMenuItem();
     GroupLayout panel1Layout = new GroupLayout(panel1);
     GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-
+    String mensajeAyuda = "MultiStudio: Permite abrir, gestionar y reproducir archivos multimedia (audio, video, imágenes).\n"
+            + "Puedes cargar playlists y álbumes de fotos.\n"
+            + "Autor: David Castillo Serrano dcs00037@red.ujaen.es";
 
 
     public UI() {
@@ -110,7 +115,7 @@ public class UI extends JFrame {
                                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                             new PestanaConCerrar(jTabbedPane1, "Video " + file.getName(), UI.this::actualizarMenus));
                                 } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png") || filePath.endsWith(".gif")) {
-                                    Component contenido = new Multimedia.Imagen1().img();
+                                    Component contenido = new IMAGEN().img(file);
                                     jTabbedPane1.addTab(null, contenido);
                                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                             new PestanaConCerrar(jTabbedPane1, "Imagen "+file.getName(), UI.this::actualizarMenus));
@@ -132,9 +137,6 @@ public class UI extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                // Aquí puedes comprobar si hay cambios sin guardar
-                boolean hayCambiosSinGuardar = /* tu lógica aquí, por ejemplo: */ false;
-
                 String mensaje = "¿Está seguro de que quiere cerrar la aplicación?";
                 if (hayCambiosSinGuardar) {
                     mensaje += "\nLos cambios no se guardarán en caso de que se hayan modificado.";
@@ -151,7 +153,7 @@ public class UI extends JFrame {
                     // Cierra la aplicación
                     System.exit(0);
                 }
-                // Si elige NO, no hace nada y la ventana sigue abierta
+
             }
         });
 
@@ -159,10 +161,9 @@ public class UI extends JFrame {
 
     private void initComponents() {
 
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MultiStudio");
-        setIconImage(new ImageIcon("../imagenes/logo.jpeg").getImage());
+        setIconImage(new ImageIcon("../MultiStudio/imagenes/logo.jpg").getImage());
         setBackground(new java.awt.Color(153, 153, 153));
         setCursor(new java.awt.Cursor(Cursor.HAND_CURSOR));
         jTabbedPane1.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
@@ -211,7 +212,79 @@ public class UI extends JFrame {
                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                             new PestanaConCerrar(jTabbedPane1, "Video" + archivoSeleccionado.getName(), UI.this::actualizarMenus));
                 } else if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".gif")) {
-                    Component contenido = new Multimedia.Imagen1().img();
+                    Component contenido = new IMAGEN().img(archivoSeleccionado);
+                    jTabbedPane1.addTab(null, contenido);
+                    jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                            new PestanaConCerrar(jTabbedPane1, "Imagen "+archivoSeleccionado.getName(), UI.this::actualizarMenus));
+                }
+            }
+        });
+        Archivos_cargarAlbum.addActionListener(evt -> {
+            JFileChooser selector = CargarFicherosINI('a');
+
+            int resultado = selector.showOpenDialog(UI.this);
+            if (resultado == JFileChooser.APPROVE_OPTION) {
+                File archivoSeleccionado = selector.getSelectedFile();
+                System.out.println("Archivo seleccionado: " + archivoSeleccionado.getAbsolutePath());
+                abrirColecciones(archivoSeleccionado);
+            }
+
+        });
+
+        Archivos_cargarPlaylist.addActionListener(evt -> {
+            JFileChooser selector = CargarFicherosINI('p');
+
+            int resultado = selector.showOpenDialog(UI.this);
+            if (resultado == JFileChooser.APPROVE_OPTION) {
+                File archivoSeleccionado = selector.getSelectedFile();
+                System.out.println("Archivo seleccionado: " + archivoSeleccionado.getAbsolutePath());
+                abrirColecciones(archivoSeleccionado);
+            }
+        });
+
+        Archivos_abrirFichero.addActionListener(evt -> {
+            JFileChooser selector = getJFileChooser();
+
+            int resultado = selector.showOpenDialog(UI.this);
+            if (resultado == JFileChooser.APPROVE_OPTION) {
+                File archivoSeleccionado = selector.getSelectedFile();
+                System.out.println("Archivo seleccionado: " + archivoSeleccionado.getAbsolutePath());
+
+                // Aquí podrías agregar lógica según el tipo de archivo
+                String nombre = archivoSeleccionado.getName().toLowerCase();
+
+                if (nombre.endsWith(".mp3") || nombre.endsWith(".wav") || nombre.endsWith(".flac")) {
+                    if (!abiertomusica) {
+                        abiertomusica = true;
+                        musica = new Multimedia.Musica1();
+                        Component contenido = musica.AUDIO(archivoSeleccionado, ArchivoAbierto);
+                        jTabbedPane1.addTab(null, contenido);
+                        jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                                new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
+                                    abiertomusica = false;
+                                    actualizarMenus();
+                                }));
+                    } else {
+                        if (musica != null) {
+                            musica.addMusica(archivoSeleccionado);
+                        } else {
+                            musica = new Multimedia.Musica1();
+                            Component contenido = musica.AUDIO(archivoSeleccionado, ArchivoAbierto);
+                            jTabbedPane1.addTab(null, contenido);
+                            jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                                    new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
+                                        abiertomusica = false;
+                                        actualizarMenus();
+                                    }));
+                        }
+                    }
+                } else if (nombre.endsWith(".mp4") || nombre.endsWith(".avi") || nombre.endsWith(".mkv")) {
+                    Component contenido = new Multimedia.Video1().getVideo();
+                    jTabbedPane1.addTab(null, contenido);
+                    jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                            new PestanaConCerrar(jTabbedPane1, "Video" + archivoSeleccionado.getName(), UI.this::actualizarMenus));
+                } else if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".gif")) {
+                    Component contenido = new IMAGEN().img(archivoSeleccionado);
                     jTabbedPane1.addTab(null, contenido);
                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                             new PestanaConCerrar(jTabbedPane1, "Imagen "+archivoSeleccionado.getName(), UI.this::actualizarMenus));
@@ -221,28 +294,28 @@ public class UI extends JFrame {
 
 
 
+
+
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
                 jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(206, 206, 206)
-                                                .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGap(323, 323, 323)
-                                                .addComponent(examinarArchivoBoton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addContainerGap(219, Short.MAX_VALUE))
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))
         );
+
         jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(186, 186, 186)
-                                .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(examinarArchivoBoton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(142, Short.MAX_VALUE))
+                jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)
         );
+
 
         ImageIcon imagenAdd = new ImageIcon("../MultiStudio/imagenes/add.png");
         Image imagenEscalada = imagenAdd.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
@@ -266,14 +339,14 @@ public class UI extends JFrame {
 
         ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO");
         label1.setText("MultiStudio");
-        jMenu1.setText("Archivos");
-        jMenu5.setText("Guardar Fichero");
-        jMenu6.setText("Archivo Original SIN MODIFICAR");
-        jMenu7.setText("Guardar Modificaciones");
-        jMenu8.setText("Abrir Fichero");
-        jMenu9.setText("Archivos Recientes");
-        jMenu13.setText("Cargar Playlist");
-        jMenu14.setText("Cargar Album Fotos");
+        M_Archivos.setText("Archivos");
+        Archivos_guardarFichero.setText("Guardar Fichero");
+        guardar_orig_sin_mod.setText("Archivo Original SIN MODIFICAR");
+        guardar_mod.setText("Guardar Modificaciones");
+        Archivos_abrirFichero.setText("Abrir Fichero");
+        Archicos_recientes.setText("Archivos Recientes");
+        Archivos_cargarPlaylist.setText("Cargar Playlist");
+        Archivos_cargarAlbum.setText("Cargar Album Fotos");
         jMenu17.setText("Añadir a Favoritos");
         jMenu2.setText("Editar");
         jMenu10.setText("Cambiar Nombre Fichero");
@@ -281,51 +354,51 @@ public class UI extends JFrame {
         jMenu12.setText("Añadir Caratula");
         jMenu15.setText("Crear Nueva PlayList");
         jMenu16.setText("Crear Album de Fotos");
-        jMenu4.setText("Ayuda");
-        jMenu3.setText("Abrir Readme Ayuda");
+        Ayuda.setText("Ayuda");
+        abrirAyuda.setText("Abrir Ayuda");
 
 
-        jMenu5.setIcon(new ImageIcon("../MultiStudio/imagenes/guardar.png"));
-        jMenu8.setIcon(new ImageIcon("../MultiStudio/imagenes/open.png"));
-        jMenu9.setIcon(new ImageIcon("../MultiStudio/imagenes/historial.png"));
-        jMenu13.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
-        jMenu14.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
+        Archivos_guardarFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/guardar.png"));
+        Archivos_abrirFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/open.png"));
+        Archicos_recientes.setIcon(new ImageIcon("../MultiStudio/imagenes/historial.png"));
+        Archivos_cargarPlaylist.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
+        Archivos_cargarAlbum.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
         jMenu17.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito.png"));
         jMenu10.setIcon(new ImageIcon("../MultiStudio/imagenes/fichero.png"));
         jMenu11.setIcon(new ImageIcon("../MultiStudio/imagenes/metadatos.png"));
         jMenu12.setIcon(new ImageIcon("../MultiStudio/imagenes/caratula.png"));
         jMenu15.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
         jMenu16.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
-        jMenu3.setIcon(new ImageIcon("../MultiStudio/imagenes/ayuda.png"));
+        abrirAyuda.setIcon(new ImageIcon("../MultiStudio/imagenes/ayuda.png"));
 
 
         setJMenuBar(jMenuBar1);
 
 
         jMenu2.add(jMenu10);
-        jMenuBar1.add(jMenu1);
-        jMenu1.add(jMenu17);
-        jMenu1.add(jMenu14);
-        jMenu1.add(jMenu13);
-        jMenu1.add(jMenu9);
-        jMenu1.add(jMenu8);
-        jMenu5.add(jMenu6);
-        jMenu5.add(jMenu7);
-        jMenu1.add(jMenu5);
+        jMenuBar1.add(M_Archivos);
+        M_Archivos.add(jMenu17);
+        M_Archivos.add(Archivos_cargarAlbum);
+        M_Archivos.add(Archivos_cargarPlaylist);
+        M_Archivos.add(Archicos_recientes);
+        M_Archivos.add(Archivos_abrirFichero);
+        Archivos_guardarFichero.add(guardar_orig_sin_mod);
+        Archivos_guardarFichero.add(guardar_mod);
+        M_Archivos.add(Archivos_guardarFichero);
         jMenu2.add(jMenu11);
         jMenu2.add(jMenu12);
         jMenu2.add(jMenu15);
         jMenu2.add(jMenu16);
         jMenuBar1.add(jMenu2);
-        jMenu4.add(jMenu3);
-        jMenuBar1.add(jMenu4);
+        Ayuda.add(abrirAyuda);
+        jMenuBar1.add(Ayuda);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addComponent(jSeparator1)
                         .addGroup(layout.createSequentialGroup().addGap(102, 102, 102).addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addGap(98, 98, 98))
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addContainerGap(47, Short.MAX_VALUE).addComponent(jTabbedPane1, GroupLayout.PREFERRED_SIZE, 792, GroupLayout.PREFERRED_SIZE).addGap(43, 43, 43))
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addContainerGap(47, Short.MAX_VALUE).addComponent(jTabbedPane1, GroupLayout.DEFAULT_SIZE, 792, GroupLayout.PREFERRED_SIZE).addGap(43, 43, 43))
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -355,6 +428,12 @@ public class UI extends JFrame {
         });
         actualizarMenus();
 
+        abrirAyuda.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, mensajeAyuda, "Ayuda", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+
+
     }
 
     private static JFileChooser getJFileChooser() {
@@ -370,7 +449,7 @@ public class UI extends JFrame {
         return selector;
     }
 
-    private void actualizarMenus() {
+    public void actualizarMenus() {
         boolean hayContenido = jTabbedPane1.getTabCount() > 1; // La primera pestaña es la de arrastrar/examinar
         boolean hayMusica = abiertomusica && musica != null;
 
@@ -379,11 +458,11 @@ public class UI extends JFrame {
 
         // Opciones dentro de "Archivos"
         jMenu17.setEnabled(hayMusica); // Añadir a favoritos
-        jMenu5.setEnabled(hayContenido); // Guardar (y submenús)
+        Archivos_guardarFichero.setEnabled(hayContenido); // Guardar (y submenús)
     }
 
 
-    public class PestanaConCerrar extends JPanel {
+    public static class PestanaConCerrar extends JPanel {
         public PestanaConCerrar(JTabbedPane tabbedPane, String titulo, Runnable onClose) {
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -413,6 +492,54 @@ public class UI extends JFrame {
             add(botonCerrar);
         }
     }
+
+    private JFileChooser CargarFicherosINI(char tipo) {
+        JFileChooser selector = new JFileChooser();
+        selector.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        javax.swing.filechooser.FileFilter filtroINI = new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                String name = f.getName().toLowerCase();
+                if (tipo == 'a') {
+                    return name.equalsIgnoreCase("ALBUM.ini");
+                } else if (tipo == 'p') {
+                    return name.equalsIgnoreCase("PLAYLIST.ini");
+                }
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                if (tipo == 'a') {
+                    return "Archivo ALBUM.ini";
+                } else if (tipo == 'p') {
+                    return "Archivo PLAYLIST.ini";
+                }
+                return "Archivos .ini (ALBUM.ini o PLAYLIST.ini)";
+            }
+        };
+        selector.setFileFilter(filtroINI);
+        return selector;
+    }
+
+    public void modificaGuardar(boolean t){
+        hayCambiosSinGuardar=t;
+    }
+
+    private void abrirColecciones(File archivo){
+
+
+
+
+
+
+    }
+
+
 
 
 }

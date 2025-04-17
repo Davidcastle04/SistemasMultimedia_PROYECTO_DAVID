@@ -43,7 +43,7 @@ public class Main {
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());
             UI interfaz = new UI();
-            interfaz.setTitle("Sistema Multimedia");
+            interfaz.setTitle("MultiStudio V1.0");
             interfaz.setLocationRelativeTo(null);
             interfaz.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             interfaz.setResizable(true);

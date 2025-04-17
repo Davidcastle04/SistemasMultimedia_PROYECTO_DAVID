@@ -6,7 +6,7 @@ import java.io.File;
 
 public interface Multimedia {
 
-    class Video1{
+    class Video1 {
         JPanel jPanel3 = new JPanel();
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         Panel panel2 = new Panel();
@@ -28,11 +28,11 @@ public interface Multimedia {
         Label label24 = new Label();
         Label label25 = new Label();
 
-        Video1(){
+        Video1() {
             jPanel3.setLayout(jPanel3Layout);
         }
 
-        public JPanel getVideo(){
+        public JPanel getVideo() {
 
 
             label17.setText("--:-- / --:--");
@@ -142,7 +142,6 @@ public interface Multimedia {
             );
 
 
-
             return jPanel3;
         }
     }
@@ -175,7 +174,6 @@ public interface Multimedia {
         JSlider jSlider1 = new JSlider(); // missing declaration
         JPanel panel1 = new JPanel(); // missing declaration
         JPanel panel2 = new JPanel(); // missing declaration
-
 
 
         public JPanel AUDIO(File archivoSeleccionado, JTextField estado) {
@@ -299,8 +297,12 @@ public interface Multimedia {
             return panelAudio;
         }
 
-        public void addMusica(File archivoSeleccionado){}
-        private void CambiarAudio(File archivo){}
+        public void addMusica(File archivoSeleccionado) {
+        }
+
+        private void CambiarAudio(File archivo) {
+        }
+
         private String formatTime(long millis) {
             long seconds = millis / 1000;
             long minutes = seconds / 60;
@@ -309,111 +311,4 @@ public interface Multimedia {
         }
     }
 
-    class Imagen1{
-
-
-        JButton jButton1 = new JButton();
-        JButton jButton2 = new JButton();
-        JButton jButton3 = new JButton();
-        Label label11 = new Label();
-        Label label12 = new Label();
-        Label label13 = new Label();
-        Label label14 = new Label();
-        Label label15 = new Label();
-        Label label16 = new Label();
-        JPanel jPanel4 = new JPanel();
-        JPanel jPanel5 = new JPanel();
-
-        GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
-
-        Imagen1(){
-            System.out.printf("Inicializado el panel de imagenes");
-        }
-
-        public JPanel img(){
-
-            jButton1.setForeground(new Color(255, 0, 51));
-            jButton1.setText("Borrar Fotografia");
-
-            jButton2.setText("Añadir a un album");
-
-            jButton3.setText("Ver más fotos del mismo albúm");
-
-            label11.setText("Metadatos de la imagen");
-
-            label12.setText("Fecha y Hora");
-
-            label13.setText("Modelo de cámara ");
-
-            label14.setText("Tamaño ");
-
-            label15.setText("ISO");
-
-            label16.setText("Velocidad de obturación ");
-
-            jPanel4.setLayout(jPanel4Layout);
-            jPanel4Layout.setHorizontalGroup(
-                    jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                    .addGap(34, 34, 34)
-                                    .addComponent(jPanel5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                            .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                                    .addComponent(jButton3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(jButton2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addComponent(jButton1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                            .addComponent(label11, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                                    .addGap(10, 10, 10)
-                                                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                            .addComponent(label13, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                            .addComponent(label12, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                            .addComponent(label14, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                            .addComponent(label15, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                            .addComponent(label16, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))))
-                                    .addContainerGap(23, Short.MAX_VALUE))
-            );
-            jPanel4Layout.setVerticalGroup(
-                    jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                    .addGap(30, 30, 30)
-                                    .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                            .addComponent(jPanel5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                                    .addComponent(jButton1)
-                                                    .addGap(18, 18, 18)
-                                                    .addComponent(jButton2)
-                                                    .addGap(18, 18, 18)
-                                                    .addComponent(jButton3)
-                                                    .addGap(20, 20, 20)
-                                                    .addComponent(label11, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                    .addComponent(label12, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                    .addComponent(label13, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                    .addComponent(label14, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                    .addComponent(label15, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                    .addComponent(label16, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-                                    .addContainerGap(32, Short.MAX_VALUE))
-            );
-
-            GroupLayout jPanel5Layout = new GroupLayout(jPanel5);
-            jPanel5.setLayout(jPanel5Layout);
-            jPanel5Layout.setHorizontalGroup(
-                    jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addGap(0, 484, Short.MAX_VALUE)
-            );
-            jPanel5Layout.setVerticalGroup(
-                    jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addGap(0, 322, Short.MAX_VALUE)
-            );
-            return jPanel4;
-        }
-
-
-    }
 }
