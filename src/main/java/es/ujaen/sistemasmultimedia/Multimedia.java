@@ -1,8 +1,11 @@
 package es.ujaen.sistemasmultimedia;
 
+import org.apache.commons.imaging.common.RationalNumber;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Date;
 
 public interface Multimedia {
 

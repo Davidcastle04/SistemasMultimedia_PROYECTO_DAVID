@@ -3,6 +3,15 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.*;
 import com.drew.metadata.exif.*;
 import es.ujaen.sistemasmultimedia.UI;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
+import org.apache.commons.imaging.common.RationalNumber;
+import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
+import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -14,8 +23,9 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
-public class IMAGEN {
+public class IMAGEN  {
 
+    UI interfaz;
     JButton Boton_borrarImagen = new JButton("     Borrar Fotografía     ");
     JButton Boton_addAlbum = new JButton("    Añadir a un álbum    ");
     JButton Boton_verAlbum = new JButton("Ver más fotos del mismo álbum");
@@ -32,13 +42,15 @@ public class IMAGEN {
     JButton rotateRightBtn = new JButton("Rotar ➡");
     JButton rotateLeftBtn = new JButton("Rotar ⬅");
     JButton resetZoomBtn = new JButton("Reset");
-
+    File foto;
     ZoomableImagePanel zoomPanel;
 
     GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
 
-    public IMAGEN() {
+    public IMAGEN(UI i ) {
         System.out.println("Inicializado el panel de imágenes");
+        interfaz = i;
+        interfaz.IMAGENCONF(false);
     }
 
     public JPanel img(File archivo) {
@@ -133,56 +145,13 @@ public class IMAGEN {
 
 
         Boton_addAlbum.addActionListener(evt -> {
-            String[] opciones = {"Álbum existente", "Álbum nuevo"};
-            int seleccion = JOptionPane.showOptionDialog(
-                    null,
-                    "¿Deseas guardar la imagen en un álbum existente o crear uno nuevo?",
-                    "Añadir a álbum",
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    opciones,
-                    opciones[0]);
-
-            if (seleccion == 0) { // Álbum existente
-                JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Selecciona el archivo .ini del álbum");
-                chooser.setFileFilter(new FileNameExtensionFilter("Ficheros INI", "ini"));
-
-                int result = chooser.showOpenDialog(null);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File iniFile = chooser.getSelectedFile();
-                    try (FileWriter writer = new FileWriter(iniFile, true)) {
-                        writer.write(archivo.getAbsolutePath() + System.lineSeparator());
-                        JOptionPane.showMessageDialog(null, "Imagen añadida al álbum existente.");
-
-                    } catch (IOException e) {
-                        JOptionPane.showMessageDialog(null, "Error al escribir en el álbum: " + e.getMessage());
-                    }
-                }
-
-            } else if (seleccion == 1) { // Álbum nuevo
-                String nombre = JOptionPane.showInputDialog(null, "Introduce el nombre del nuevo álbum:");
-                if (nombre != null && !nombre.trim().isEmpty()) {
-
-                    File iniFil = new File("../ALBUMS/"+nombre+".ini");
-                    try(FileWriter writer = new FileWriter(iniFil, true)) {
-                        writer.write("NOMBRE_ALBUM="+nombre+System.lineSeparator());
-                        writer.write(archivo.getAbsolutePath() + System.lineSeparator());
-                        JOptionPane.showMessageDialog(null, "Imagen añadida al álbum existente.");
-
-                    }catch(IOException se){
-                        JOptionPane.showMessageDialog(null, "Error al escribir en el álbum: " + se.getMessage());
-                    }
-                    JOptionPane.showMessageDialog(null, "Álbum '" + nombre + "' creado y se añadió la imagen.");
-                }
-            }
+            crearAlbum();
         });
 
 
         Boton_verAlbum.addActionListener(evt -> {
             File carpetaAlbums = new File("../ALBUMS");
-            File[] archivos = carpetaAlbums.listFiles((dir, name) -> name.toLowerCase().endsWith(".ini"));
+            File[] archivos = carpetaAlbums.listFiles((dir, name) -> name.toLowerCase().endsWith(".album"));
             boolean encontrada = false;
 
             if (archivos != null) {
@@ -222,7 +191,21 @@ public class IMAGEN {
                                     panel.add(label);
                                 }
 
-                                JOptionPane.showMessageDialog(null, panel, "Fotos del álbum: " + archivo.getName().replace(".ini", ""), JOptionPane.PLAIN_MESSAGE);
+                                String titulo = "Álbum sin nombre";
+
+                                if (lineas.get(0).contains("NOMBRE_ALBUM=")) {
+                                    String[] partes = lineas.get(0).split("NOMBRE_ALBUM=");
+                                    if (partes.length > 1 && !partes[1].trim().isEmpty()) {
+                                        titulo = "Fotos del álbum: " + partes[1].trim();
+                                    } else {
+                                        titulo = "Fotos del álbum: Álbum sin nombre";
+                                    }
+                                } else {
+                                    titulo = "Fotos del álbum: Álbum sin nombre";
+                                }
+
+                                JOptionPane.showMessageDialog(null, panel, titulo, JOptionPane.PLAIN_MESSAGE);
+
                                 return; // Salir después de mostrar el primer álbum encontrado
                             }
                         }
@@ -240,7 +223,56 @@ public class IMAGEN {
 
         return jPanel4;
     }
+
+    private void crearAlbum(){
+        String[] opciones = {"Álbum existente", "Álbum nuevo"};
+        int seleccion = JOptionPane.showOptionDialog(
+                null,
+                "¿Deseas guardar la imagen en un álbum existente o crear uno nuevo?",
+                "Añadir a álbum",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+
+        if (seleccion == 0) { // Álbum existente
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Selecciona el archivo .album del álbum");
+            chooser.setFileFilter(new FileNameExtensionFilter("Ficheros .album", "album"));
+
+            int result = chooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File iniFile = chooser.getSelectedFile();
+                try (FileWriter writer = new FileWriter(iniFile, true)) {
+                    writer.write(foto.getAbsolutePath() + System.lineSeparator());
+                    JOptionPane.showMessageDialog(null, "Imagen añadida al álbum existente.");
+
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(null, "Error al escribir en el álbum: " + e.getMessage());
+                }
+            }
+
+        } else if (seleccion == 1) { // Álbum nuevo
+            String nombre = JOptionPane.showInputDialog(null, "Introduce el nombre del nuevo álbum:");
+            if (nombre != null && !nombre.trim().isEmpty()) {
+
+                File iniFil = new File("../ALBUMS/"+nombre+".album");
+                try(FileWriter writer = new FileWriter(iniFil, true)) {
+                    writer.write("NOMBRE_ALBUM="+nombre+System.lineSeparator());
+                    writer.write(foto.getAbsolutePath() + System.lineSeparator());
+                    JOptionPane.showMessageDialog(null, "Imagen añadida al álbum existente.");
+
+                }catch(IOException se){
+                    JOptionPane.showMessageDialog(null, "Error al escribir en el álbum: " + se.getMessage());
+                }
+                JOptionPane.showMessageDialog(null, "Álbum '" + nombre + "' creado y se añadió la imagen.");
+            }
+        }
+    }
+
     public void cargarImagen(File f) {
+        foto=f;
         try {
             BufferedImage imagen = ImageIO.read(f);
             if (imagen != null) {
@@ -276,7 +308,10 @@ public class IMAGEN {
 
     private void abrirfoto(File f ){
 
-        Component contenido = new IMAGEN().img(f);
+        IMAGEN imagen = new IMAGEN(interfaz);
+        JPanel panel = imagen.img(f);
+        interfaz.panelImagenMap.put(panel,imagen);
+        Component contenido = panel;
 
         JTabbedPane jTabbedPane1 = (JTabbedPane)jPanel4.getParent();
         jTabbedPane1.addTab(null,contenido);
@@ -443,6 +478,115 @@ public class IMAGEN {
         @Override
         public Dimension getPreferredSize() {
             return new Dimension(800, 600);
+        }
+    }
+
+    public void TratarArchivo(int i , Object t ) {
+        switch (i) {
+            case 1:
+                // Cambiar de nombre fichero: pedir nombre al usuario
+                String nuevoNombre = JOptionPane.showInputDialog(null, "Introduce el nuevo nombre del archivo:");
+                if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
+                    File file = new File(foto.getParent(), nuevoNombre);
+                    if (!foto.renameTo(file)) {
+                        JOptionPane.showMessageDialog(null, "Error al renombrar el archivo");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Archivo renombrado correctamente.");
+                        interfaz.cambiarNombreTAB(nuevoNombre);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Nombre no válido o cancelado.");
+                }
+                break;
+
+            case 2:
+                try {
+                    // Crear un panel con campos para rellenar
+                    JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+
+                    JTextField isoField = new JTextField();
+                    JTextField fechaYhoraField = new JTextField();
+                    JTextField velObtField = new JTextField();
+                    JTextField modeloField = new JTextField();
+
+                    panel.add(new JLabel("ISO de la cámara:"));
+                    panel.add(isoField);
+                    panel.add(new JLabel("Fecha y hora (YYYY:MM:DD HH:MM:SS):"));
+                    panel.add(fechaYhoraField);
+                    panel.add(new JLabel("Velocidad de obturación (ej: 1/200):"));
+                    panel.add(velObtField);
+                    panel.add(new JLabel("Modelo de la cámara:"));
+                    panel.add(modeloField);
+
+                    int result = JOptionPane.showConfirmDialog(null, panel, "Modificar Metadatos",
+                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                    if (result != JOptionPane.OK_OPTION) {
+                        JOptionPane.showMessageDialog(null, "Operación cancelada.");
+                        break;
+                    }
+
+                    String iso = isoField.getText().trim();
+                    String fechaYhora = fechaYhoraField.getText().trim();
+                    String velObt = velObtField.getText().trim();
+                    String modelo = modeloField.getText().trim();
+
+                    if (iso.isEmpty() || fechaYhora.isEmpty() || velObt.isEmpty() || modelo.isEmpty()) {
+                        JOptionPane.showMessageDialog(null, "Todos los campos deben estar completos.");
+                        break;
+                    }
+
+                    // Leer los metadatos existentes
+                    JpegImageMetadata jpegMetadata = (JpegImageMetadata) Imaging.getMetadata(foto);
+                    TiffOutputSet outputSet = (jpegMetadata != null && jpegMetadata.getExif() != null)
+                            ? jpegMetadata.getExif().getOutputSet()
+                            : new TiffOutputSet();
+
+                    TiffOutputDirectory exifDir = outputSet.getOrCreateExifDirectory();
+
+                    exifDir.removeField(ExifTagConstants.EXIF_TAG_ISO);
+                    exifDir.removeField(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL);
+                    exifDir.removeField(ExifTagConstants.EXIF_TAG_EXPOSURE_TIME);
+                    exifDir.removeField(ExifTagConstants.EXIF_TAG_MODEL_2);
+
+                    exifDir.add(ExifTagConstants.EXIF_TAG_ISO, (short) Integer.parseInt(iso));
+                    exifDir.add(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL, fechaYhora);
+
+                    // Convertir a RationalNumber (por ejemplo: 1/200 = 0.005)
+                    double fraccion = 1.0;
+                    if (velObt.contains("/")) {
+                        String[] partes = velObt.split("/");
+                        fraccion = Double.parseDouble(partes[0]) / Double.parseDouble(partes[1]);
+                    } else {
+                        fraccion = Double.parseDouble(velObt);
+                    }
+                    RationalNumber exposureTime = RationalNumber.valueOf(fraccion);
+                    exifDir.add(ExifTagConstants.EXIF_TAG_EXPOSURE_TIME, exposureTime);
+                    try{
+                        exifDir.add(ExifTagConstants.EXIF_TAG_USER_COMMENT, modelo);
+                    } catch (ImageWriteException e) {
+                        System.out.printf("Error al escribir el modelo de la cámara: %s%n", e.getMessage());
+                    }
+
+                    ModificaMetadatos(fechaYhora, modelo, (foto.length() / (1024 * 1024)) + " MB", iso, velObt);
+
+                    File nuevoArchivo = new File(foto.getParent(), foto.getName());
+                    try (OutputStream os = new FileOutputStream(nuevoArchivo)) {
+                        new ExifRewriter().updateExifMetadataLossless(foto, os, outputSet);
+                    }
+
+                    JOptionPane.showMessageDialog(null, "Metadatos modificados correctamente.");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error al modificar los metadatos: " + e.getMessage());
+                }
+                break;
+
+
+            case 3:
+                // Crear Album de Fotos
+                crearAlbum();
+                break;
         }
     }
 }
