@@ -501,20 +501,24 @@ public class UI extends JFrame {
             JOptionPane.showMessageDialog(this, mensajeAyuda, "Ayuda", JOptionPane.INFORMATION_MESSAGE);
         });
 
-        Editar_CambiarNombre.addActionListener(e -> {
-            int index = jTabbedPane1.getSelectedIndex();
-            if (index != -1) {
-                Component componente = jTabbedPane1.getComponentAt(index);
-                if (componente instanceof JPanel) {
-                    IMAGEN imagen = (IMAGEN) PANELMAP.get(componente);
-                    if (imagen != null) {
-                        imagen.TratarArchivo(1, null); // Llamar al método de IMAGEN
-                    } else {
-                        JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+Editar_CambiarNombre.addActionListener(e -> {
+    int index = jTabbedPane1.getSelectedIndex();
+    if (index != -1) {
+        Component componente = jTabbedPane1.getComponentAt(index);
+        if (componente instanceof JPanel) {
+            Object objeto = PANELMAP.get(componente);
+            if (objeto instanceof IMAGEN) {
+                IMAGEN imagen = (IMAGEN) objeto;
+                imagen.TratarArchivo(1, null); // Llamar al método de IMAGEN
+            } else if (objeto instanceof VIDEO) {
+                VIDEO video = (VIDEO) objeto;
+                video.TratarArchivo(1, null); // Llamar al método de VIDEO
+            } else {
+                JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
+        }
+    }
+});
 
         Editar_AddAlbum.addActionListener(e ->{
             int index = jTabbedPane1.getSelectedIndex();
@@ -536,9 +540,13 @@ public class UI extends JFrame {
             if (index != -1) {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
-                    IMAGEN imagen = (IMAGEN) PANELMAP.get(componente);
-                    if (imagen != null) {
+                    Object objeto = PANELMAP.get(componente);
+                    if (objeto instanceof IMAGEN) {
+                        IMAGEN imagen = (IMAGEN) objeto;
                         imagen.TratarArchivo(2, null); // Llamar al método de IMAGEN
+                    } else if (objeto instanceof VIDEO) {
+                        VIDEO video = (VIDEO) objeto;
+                        video.TratarArchivo(2, null); // Llamar al método de VIDEO
                     } else {
                         JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -563,6 +571,13 @@ public class UI extends JFrame {
       });
 
     }
+
+    public void InicioVIDEO(){
+        Editar_AddAlbum.setEnabled(false);
+        Editar_AddPlaylist.setEnabled(false);
+        Editar_AddCaratula.setEnabled(false);
+    }
+
     private static JFileChooser getJFileChooser() {
         JFileChooser selector = new JFileChooser();
         selector.setFileSelectionMode(JFileChooser.FILES_ONLY);
