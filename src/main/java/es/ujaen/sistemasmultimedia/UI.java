@@ -1,6 +1,7 @@
 package es.ujaen.sistemasmultimedia;
 
 import es.ujaen.sistemasmultimedia.MULTIMEDIA.IMAGEN;
+import es.ujaen.sistemasmultimedia.MULTIMEDIA.VIDEO;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 public class UI extends JFrame {
 
-    public Map<JPanel, IMAGEN> panelImagenMap = new HashMap<>();
+    public Map<JPanel, Object> PANELMAP = new HashMap<>();
     boolean hayCambiosSinGuardar = false;
     JTextField ArchivoAbierto = new JTextField();
     private JPanel jPanel1 = new JPanel();
@@ -118,19 +119,23 @@ public class UI extends JFrame {
                                         }
                                     }
                                 } else if (filePath.endsWith(".mp4") || filePath.endsWith(".avi") || filePath.endsWith(".mkv")) {
-                                    Component contenido = new Multimedia.Video1().getVideo();
+                                    VIDEO video = new VIDEO(UI.this);
+                                    addReciente(file);
+                                    JPanel panel = video.getVideo(file);
+                                    PANELMAP.put(panel,video);
+                                    Component contenido = panel;
                                     if (contenido instanceof JComponent) {
                                         ((JComponent) contenido).putClientProperty("tituloReal", "Video " + file.getName());
                                     }
-                                    jTabbedPane1.addTab(null, contenido);
                                     addReciente(file);
+                                    jTabbedPane1.addTab(null, contenido);
                                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
-                                            new PestanaConCerrar(jTabbedPane1, "Video " + file.getName(), UI.this::actualizarMenus));
+                                            new PestanaConCerrar(jTabbedPane1, "Video" + file.getName(), UI.this::actualizarMenus));
                                 } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png") || filePath.endsWith(".gif")) {
 
                                     IMAGEN imagen = new IMAGEN(UI.this);
                                     JPanel panel = imagen.img(file);
-                                    panelImagenMap.put(panel,imagen);
+                                    PANELMAP.put(panel,imagen);
                                     Component contenido = panel;
                                     if (contenido instanceof JComponent) {
                                         ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + file.getName());
@@ -226,7 +231,11 @@ public class UI extends JFrame {
                         }
                     }
                 } else if (nombre.endsWith(".mp4") || nombre.endsWith(".avi") || nombre.endsWith(".mkv")) {
-                    Component contenido = new Multimedia.Video1().getVideo();
+                    VIDEO video = new VIDEO(this);
+                    addReciente(archivoSeleccionado);
+                    JPanel panel = video.getVideo(archivoSeleccionado);
+                    PANELMAP.put(panel,video);
+                    Component contenido = panel;
                     if (contenido instanceof JComponent) {
                         ((JComponent) contenido).putClientProperty("tituloReal", "Video " + archivoSeleccionado.getName());
                     }
@@ -238,7 +247,7 @@ public class UI extends JFrame {
                     IMAGEN imagen = new IMAGEN(UI.this);
                     addReciente(archivoSeleccionado);
                     JPanel panel = imagen.img(archivoSeleccionado);
-                    panelImagenMap.put(panel,imagen);
+                    PANELMAP.put(panel,imagen);
                     Component contenido = panel;
                     if (contenido instanceof JComponent) {
                         ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + archivoSeleccionado.getName());
@@ -309,7 +318,7 @@ public class UI extends JFrame {
                         }
                     }
                 } else if (nombre.endsWith(".mp4") || nombre.endsWith(".avi") || nombre.endsWith(".mkv")) {
-                    Component contenido = new Multimedia.Video1().getVideo();
+                    Component contenido = new VIDEO(this).getVideo(archivoSeleccionado);
                     addReciente(archivoSeleccionado);
                     jTabbedPane1.putClientProperty("tituloReal","Video" + archivoSeleccionado.getName());
                     jTabbedPane1.addTab(null, contenido);
@@ -318,7 +327,7 @@ public class UI extends JFrame {
                 } else if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".gif")) {
                     IMAGEN imagen = new IMAGEN(UI.this);
                     JPanel panel = imagen.img(archivoSeleccionado);
-                    panelImagenMap.put(panel,imagen);
+                    PANELMAP.put(panel,imagen);
                     Component contenido = panel;
                     jTabbedPane1.putClientProperty("tituloReal","Imagen" + archivoSeleccionado.getName());
                     addReciente(archivoSeleccionado);
@@ -497,7 +506,7 @@ public class UI extends JFrame {
             if (index != -1) {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
-                    IMAGEN imagen = panelImagenMap.get(componente);
+                    IMAGEN imagen = (IMAGEN) PANELMAP.get(componente);
                     if (imagen != null) {
                         imagen.TratarArchivo(1, null); // Llamar al método de IMAGEN
                     } else {
@@ -512,7 +521,7 @@ public class UI extends JFrame {
             if (index != -1) {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
-                    IMAGEN imagen = panelImagenMap.get(componente);
+                    IMAGEN imagen = (IMAGEN) PANELMAP.get(componente);
                     if (imagen != null) {
                         imagen.TratarArchivo(3, null); // Llamar al método de IMAGEN
                     } else {
@@ -527,7 +536,7 @@ public class UI extends JFrame {
             if (index != -1) {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
-                    IMAGEN imagen = panelImagenMap.get(componente);
+                    IMAGEN imagen = (IMAGEN) PANELMAP.get(componente);
                     if (imagen != null) {
                         imagen.TratarArchivo(2, null); // Llamar al método de IMAGEN
                     } else {
@@ -536,6 +545,22 @@ public class UI extends JFrame {
                 }
             }
         });
+
+        jTabbedPane1.addChangeListener(e -> {
+          int index = jTabbedPane1.getSelectedIndex();
+          if (index != -1) {
+              Component componente = jTabbedPane1.getComponentAt(index);
+              VIDEO video = (VIDEO) PANELMAP.get(componente);
+              if (video != null) {
+                  video.cambioPestana(true);
+              } else {
+                  PANELMAP.values().stream()
+                      .filter(obj -> obj instanceof VIDEO)
+                      .map(obj -> (VIDEO) obj)
+                      .forEach(v -> v.cambioPestana(false));
+              }
+          }
+      });
 
     }
     private static JFileChooser getJFileChooser() {
@@ -644,7 +669,7 @@ public class UI extends JFrame {
 
             IMAGEN imagen = new IMAGEN(UI.this);
             JPanel panel = imagen.img(new File(lineas.get(1)));
-            panelImagenMap.put(panel,imagen);
+            PANELMAP.put(panel,imagen);
             Component contenido = panel;
             if (contenido instanceof JComponent) {
                 ((JComponent) contenido).putClientProperty("tituloReal", "Album  " + archivo.getName());
@@ -703,7 +728,11 @@ public class UI extends JFrame {
                 }
             }
         } else if (filePath.endsWith(".mp4") || filePath.endsWith(".avi") || filePath.endsWith(".mkv")) {
-            Component contenido = new Multimedia.Video1().getVideo();
+            VIDEO video = new VIDEO(this);
+            addReciente(file);
+            JPanel panel = video.getVideo(file);
+            PANELMAP.put(panel,video);
+            Component contenido = panel;
             if (contenido instanceof JComponent) {
                 ((JComponent) contenido).putClientProperty("tituloReal", "Video " + file.getName());
             }
@@ -715,7 +744,7 @@ public class UI extends JFrame {
             IMAGEN imagen = new IMAGEN(UI.this);
             addReciente(file);
             JPanel panel = imagen.img(file);
-            panelImagenMap.put(panel,imagen);
+            PANELMAP.put(panel,imagen);
             Component contenido = panel;
             if (contenido instanceof JComponent) {
                 ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + file.getName());
@@ -762,6 +791,10 @@ public class UI extends JFrame {
        }
    }
 
-    };
+   public void addFavoritos(File f){
+
+   }
+
+};
 
 

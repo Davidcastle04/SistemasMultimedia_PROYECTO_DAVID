@@ -9,8 +9,7 @@ import org.apache.commons.imaging.common.RationalNumber;
 import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
-import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
-import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
+import org.apache.commons.imaging.formats.tiff.write.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -310,7 +309,7 @@ public class IMAGEN  {
 
         IMAGEN imagen = new IMAGEN(interfaz);
         JPanel panel = imagen.img(f);
-        interfaz.panelImagenMap.put(panel,imagen);
+        interfaz.PANELMAP.put(panel,imagen);
         Component contenido = panel;
 
         JTabbedPane jTabbedPane1 = (JTabbedPane)jPanel4.getParent();
