@@ -10,11 +10,16 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class UI extends JFrame {
@@ -34,6 +39,7 @@ public class UI extends JFrame {
     JMenuBar jMenuBar1 = new JMenuBar();
     JMenu M_Archivos = new JMenu();
     JMenu Archivos_guardarFichero = new JMenu();
+    JMenu Archivo_FAVORITOS = new JMenu();
     JMenuItem guardar_orig_sin_mod = new JMenuItem();
     JMenuItem guardar_mod = new JMenuItem();
     JMenuItem Archivos_abrirFichero = new JMenuItem();
@@ -58,6 +64,7 @@ public class UI extends JFrame {
 
     public UI() {
         initComponents();
+        abrirFavoritos(); // Cargar los favoritos al iniciar la interfaz
         new DropTarget(jPanel1, new DropTargetListener() {
             @Override
             public void dragEnter(DropTargetDragEvent dtde) {}
@@ -336,11 +343,33 @@ public class UI extends JFrame {
                             new PestanaConCerrar(jTabbedPane1, "Imagen "+archivoSeleccionado.getName(), UI.this::actualizarMenus));
                 }
             }
+
         });
 
-
-
-
+        Archivos_addFav.addActionListener(e -> {
+             int index = jTabbedPane1.getSelectedIndex();
+             if (index != -1) {
+                 Component componente = jTabbedPane1.getComponentAt(index);
+                 if (componente instanceof JPanel) {
+                     Object objeto = PANELMAP.get(componente);
+                     if (objeto instanceof IMAGEN) {
+                         IMAGEN imagen = (IMAGEN) objeto;
+                         File archivoSeleccionado = imagen.getArchivo(); // Método para obtener el archivo
+                         addFavoritos(archivoSeleccionado);
+                     } else if (objeto instanceof VIDEO) {
+                         VIDEO video = (VIDEO) objeto;
+                         File archivoSeleccionado = video.getArchivo(); // Método para obtener el archivo
+                         addFavoritos(archivoSeleccionado);
+                     } else if (objeto instanceof Multimedia.Musica1) {
+                         Multimedia.Musica1 musica = (Multimedia.Musica1) objeto;
+                         File archivoSeleccionado = musica.getArchivo(); // Método para obtener el archivo
+                         addFavoritos(archivoSeleccionado);
+                     } else {
+                         JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                     }
+                 }
+             }
+         });
 
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -389,9 +418,6 @@ public class UI extends JFrame {
         });
 
 
-
-
-
         panel1.setLayout(panel1Layout);
         panel1Layout.setHorizontalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
         panel1Layout.setVerticalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
@@ -415,6 +441,7 @@ public class UI extends JFrame {
         Archivos_abrirFichero.setText("Abrir Fichero");
         Archicos_recientes.setText("Archivos Recientes");
         Archivos_cargarPlaylist.setText("Cargar Playlist");
+        Archivo_FAVORITOS.setText("Abrir Favoritos");
         Archivos_cargarAlbum.setText("Cargar Album Fotos");
         Archivos_addFav.setText("Añadir a Favoritos");
         Editar.setText("Editar");
@@ -430,6 +457,7 @@ public class UI extends JFrame {
         Archivos_guardarFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/guardar.png"));
         Archivos_abrirFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/open.png"));
         Archicos_recientes.setIcon(new ImageIcon("../MultiStudio/imagenes/historial.png"));
+        Archivo_FAVORITOS.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito2.png"));
         Archivos_cargarPlaylist.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
         Archivos_cargarAlbum.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
         Archivos_addFav.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito.png"));
@@ -447,6 +475,7 @@ public class UI extends JFrame {
         Editar.add(Editar_CambiarNombre);
         jMenuBar1.add(M_Archivos);
         M_Archivos.add(Archivos_addFav);
+        M_Archivos.add(Archivo_FAVORITOS);
         M_Archivos.add(Archivos_cargarAlbum);
         M_Archivos.add(Archivos_cargarPlaylist);
         M_Archivos.add(Archicos_recientes);
@@ -501,24 +530,24 @@ public class UI extends JFrame {
             JOptionPane.showMessageDialog(this, mensajeAyuda, "Ayuda", JOptionPane.INFORMATION_MESSAGE);
         });
 
-Editar_CambiarNombre.addActionListener(e -> {
-    int index = jTabbedPane1.getSelectedIndex();
-    if (index != -1) {
-        Component componente = jTabbedPane1.getComponentAt(index);
-        if (componente instanceof JPanel) {
-            Object objeto = PANELMAP.get(componente);
-            if (objeto instanceof IMAGEN) {
-                IMAGEN imagen = (IMAGEN) objeto;
-                imagen.TratarArchivo(1, null); // Llamar al método de IMAGEN
-            } else if (objeto instanceof VIDEO) {
-                VIDEO video = (VIDEO) objeto;
-                video.TratarArchivo(1, null); // Llamar al método de VIDEO
-            } else {
-                JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        Editar_CambiarNombre.addActionListener(e -> {
+            int index = jTabbedPane1.getSelectedIndex();
+            if (index != -1) {
+                Component componente = jTabbedPane1.getComponentAt(index);
+                if (componente instanceof JPanel) {
+                    Object objeto = PANELMAP.get(componente);
+                    if (objeto instanceof IMAGEN) {
+                        IMAGEN imagen = (IMAGEN) objeto;
+                        imagen.TratarArchivo(1, null); // Llamar al método de IMAGEN
+                    } else if (objeto instanceof VIDEO) {
+                        VIDEO video = (VIDEO) objeto;
+                        video.TratarArchivo(1, null); // Llamar al método de VIDEO
+                    } else {
+                        JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             }
-        }
-    }
-});
+        });
 
         Editar_AddAlbum.addActionListener(e ->{
             int index = jTabbedPane1.getSelectedIndex();
@@ -590,6 +619,7 @@ Editar_CambiarNombre.addActionListener(e -> {
         selector.setFileFilter(filtro);
         return selector;
     }
+
     public void actualizarMenus() {
         boolean hayContenido = jTabbedPane1.getTabCount() > 1; // La primera pestaña es la de arrastrar/examinar
         boolean hayMusica = abiertomusica && musica != null;
@@ -598,14 +628,17 @@ Editar_CambiarNombre.addActionListener(e -> {
         Editar.setEnabled(hayContenido);
 
         // Opciones dentro de "Archivos"
-        Archivos_addFav.setEnabled(hayMusica); // Añadir a favoritos
+
+        Archivos_addFav.setEnabled(hayContenido); // Añadir a favoritos
         Archivos_guardarFichero.setEnabled(hayContenido); // Guardar (y submenús)
     }
+
     public void IMAGENCONF(Boolean r){
         Editar_AddCaratula.setEnabled(r);
         Archivos_addFav.setEnabled(!r);
         Editar_AddPlaylist.setEnabled(r);
     }
+
     public static class PestanaConCerrar extends JPanel {
         public PestanaConCerrar(JTabbedPane tabbedPane, String titulo, Runnable onClose) {
             setOpaque(false);
@@ -642,6 +675,7 @@ Editar_CambiarNombre.addActionListener(e -> {
             repaint();
         }
     }
+
     private JFileChooser CargarFicherosINI(char tipo) {
     JFileChooser selector = new JFileChooser();
     selector.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -674,9 +708,11 @@ Editar_CambiarNombre.addActionListener(e -> {
     selector.setFileFilter(filtroINI);
     return selector;
 }
+
     public void modificaGuardar(boolean t){
         hayCambiosSinGuardar=t;
     }
+
     private void abrirColecciones(File archivo){
         if (archivo.getName().endsWith(".album")){
             try{
@@ -700,6 +736,7 @@ Editar_CambiarNombre.addActionListener(e -> {
 
 
     }
+
     public void cambiarNombreTAB(String nombre){
         int index = jTabbedPane1.getSelectedIndex();
         if (index != -1) {
@@ -716,22 +753,11 @@ Editar_CambiarNombre.addActionListener(e -> {
     }
 
     public void abrirFichero(File file){
-        String filePath = file.getAbsolutePath().toLowerCase();
-        if (filePath.endsWith(".mp3") || filePath.endsWith(".wav") || filePath.endsWith(".flac")) {
-            if (!abiertomusica) {
-                abiertomusica = true;
-                musica = new Multimedia.Musica1();
-                Component contenido = musica.AUDIO(file, ArchivoAbierto);
-                jTabbedPane1.addTab(null, contenido);
-                jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
-                        new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
-                            abiertomusica = false;
-                            actualizarMenus();
-                        }));
-            } else {
-                if (musica != null) {
-                    musica.addMusica(file);
-                } else {
+        if(file.exists()){
+            String filePath = file.getAbsolutePath().toLowerCase();
+            if (filePath.endsWith(".mp3") || filePath.endsWith(".wav") || filePath.endsWith(".flac")) {
+                if (!abiertomusica) {
+                    abiertomusica = true;
                     musica = new Multimedia.Musica1();
                     Component contenido = musica.AUDIO(file, ArchivoAbierto);
                     jTabbedPane1.addTab(null, contenido);
@@ -740,35 +766,51 @@ Editar_CambiarNombre.addActionListener(e -> {
                                 abiertomusica = false;
                                 actualizarMenus();
                             }));
+                } else {
+                    if (musica != null) {
+                        musica.addMusica(file);
+                    } else {
+                        musica = new Multimedia.Musica1();
+                        Component contenido = musica.AUDIO(file, ArchivoAbierto);
+                        jTabbedPane1.addTab(null, contenido);
+                        jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                                new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
+                                    abiertomusica = false;
+                                    actualizarMenus();
+                                }));
+                    }
                 }
-            }
-        } else if (filePath.endsWith(".mp4") || filePath.endsWith(".avi") || filePath.endsWith(".mkv")) {
-            VIDEO video = new VIDEO(this);
-            addReciente(file);
-            JPanel panel = video.getVideo(file);
-            PANELMAP.put(panel,video);
-            Component contenido = panel;
-            if (contenido instanceof JComponent) {
-                ((JComponent) contenido).putClientProperty("tituloReal", "Video " + file.getName());
-            }
-            addReciente(file);
-            jTabbedPane1.addTab(null, contenido);
-            jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
-                    new PestanaConCerrar(jTabbedPane1, "Video" + file.getName(), UI.this::actualizarMenus));
-        } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png") || filePath.endsWith(".gif")) {
-            IMAGEN imagen = new IMAGEN(UI.this);
-            addReciente(file);
-            JPanel panel = imagen.img(file);
-            PANELMAP.put(panel,imagen);
-            Component contenido = panel;
-            if (contenido instanceof JComponent) {
-                ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + file.getName());
-            }
-            jTabbedPane1.addTab(null, contenido);
-            jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
-                    new PestanaConCerrar(jTabbedPane1, "Imagen "+file.getName(), UI.this::actualizarMenus));
+            } else if (filePath.endsWith(".mp4") || filePath.endsWith(".avi") || filePath.endsWith(".mkv")) {
+                VIDEO video = new VIDEO(this);
+                addReciente(file);
+                JPanel panel = video.getVideo(file);
+                PANELMAP.put(panel,video);
+                Component contenido = panel;
+                if (contenido instanceof JComponent) {
+                    ((JComponent) contenido).putClientProperty("tituloReal", "Video " + file.getName());
+                }
+                addReciente(file);
+                jTabbedPane1.addTab(null, contenido);
+                jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                        new PestanaConCerrar(jTabbedPane1, "Video" + file.getName(), UI.this::actualizarMenus));
+            } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png") || filePath.endsWith(".gif")) {
+                IMAGEN imagen = new IMAGEN(UI.this);
+                addReciente(file);
+                JPanel panel = imagen.img(file);
+                PANELMAP.put(panel,imagen);
+                Component contenido = panel;
+                if (contenido instanceof JComponent) {
+                    ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + file.getName());
+                }
+                jTabbedPane1.addTab(null, contenido);
+                jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                        new PestanaConCerrar(jTabbedPane1, "Imagen "+file.getName(), UI.this::actualizarMenus));
 
+            }
+        }else{
+            JOptionPane.showMessageDialog(null,"El fichero "+file.getName()+" no existe o bien ha cambiado de ruta ","Error",JOptionPane.ERROR_MESSAGE);
         }
+
 
 
     }
@@ -781,18 +823,27 @@ Editar_CambiarNombre.addActionListener(e -> {
                    ? Files.readAllLines(archivoRecientes.toPath())
                    : new java.util.ArrayList<>();
 
-           // Verificar si la ruta ya existe
+           // Verificar si la ruta ya existe y eliminarla si está presente
            String nuevaRuta = archivoSeleccionado.getAbsolutePath();
-           if (!lineasExistentes.contains(nuevaRuta)) {
-               // Agregar la nueva ruta al archivo
-               try (FileWriter fw = new FileWriter(archivoRecientes, true)) {
-                   fw.write(nuevaRuta + "\n");
+           lineasExistentes.remove(nuevaRuta);
+
+           // Añadir la nueva ruta al inicio de la lista
+           lineasExistentes.add(0, nuevaRuta);
+
+           // Limitar la lista a los últimos 5 elementos
+           if (lineasExistentes.size() > 5) {
+               lineasExistentes = lineasExistentes.subList(0, 5);
+           }
+
+           // Escribir la lista actualizada en el archivo
+           try (FileWriter fw = new FileWriter(archivoRecientes, false)) { // Sobrescribir el archivo
+               for (String linea : lineasExistentes) {
+                   fw.write(linea + "\n");
                }
            }
 
            // Actualizar el menú de archivos recientes
            Archicos_recientes.removeAll(); // Limpia los elementos previos del menú
-           lineasExistentes.add(nuevaRuta); // Asegurarse de incluir la nueva ruta
            lineasExistentes.forEach(linea -> {
                JMenuItem menuItem = new JMenuItem(linea);
                menuItem.addActionListener(ef -> abrirFichero(new File(linea)));
@@ -806,9 +857,109 @@ Editar_CambiarNombre.addActionListener(e -> {
        }
    }
 
-   public void addFavoritos(File f){
+    public void addFavoritos(File f) {
+        try {
+            // Leer las líneas existentes en el archivo favoritos.txt
+            File archivoFavoritos = new File("favoritos.txt");
+            java.util.List<String> lineasExistentes = archivoFavoritos.exists()
+                    ? Files.readAllLines(archivoFavoritos.toPath())
+                    : new java.util.ArrayList<>();
 
-   }
+            // Verificar si la ruta ya existe y eliminarla si está presente
+            String nuevaRuta = f.getAbsolutePath();
+            lineasExistentes.remove(nuevaRuta);
+
+            // Añadir la nueva ruta al inicio de la lista
+            lineasExistentes.add(0, nuevaRuta);
+
+            // Limitar la lista a los últimos 10 elementos
+            if (lineasExistentes.size() > 10) {
+                lineasExistentes = lineasExistentes.subList(0, 10);
+            }
+
+            // Escribir la lista actualizada en el archivo
+            try (FileWriter fw = new FileWriter(archivoFavoritos, false)) { // Sobrescribir el archivo
+                for (String linea : lineasExistentes) {
+                    fw.write(linea + "\n");
+                }
+            }
+
+            // Mostrar mensaje al usuario
+            JOptionPane.showMessageDialog(null, "Archivo añadido a favoritos. Quedan " + (10 - lineasExistentes.size()) + " espacios disponibles.", "Favoritos", JOptionPane.INFORMATION_MESSAGE);
+
+            // Actualizar el menú de favoritos
+            abrirFavoritos();
+
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(null, "Error al manejar archivos favoritos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void abrirFavoritos() {
+        try {
+            // Leer las líneas existentes en el archivo favoritos.txt
+            File archivoFavoritos = new File("favoritos.txt");
+            List<String> lineasExistentes = archivoFavoritos.exists()
+                    ? Files.readAllLines(archivoFavoritos.toPath())
+                    : new ArrayList<>();
+
+            Archivo_FAVORITOS.removeAll(); // Limpia los elementos previos del menú
+
+            for (String linea : lineasExistentes) {
+                File archivo = new File(linea);
+                String nombreArchivo = archivo.getName();
+
+                JMenuItem menuItem = new JMenuItem(nombreArchivo, createIconX());
+                menuItem.setToolTipText(nombreArchivo);
+
+                // Acción para abrir el archivo
+                menuItem.addActionListener(e -> abrirFichero(archivo));
+
+                // Menú contextual (clic derecho) para eliminar
+                menuItem.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        if (SwingUtilities.isRightMouseButton(e)) {
+                            int confirm = JOptionPane.showConfirmDialog(null,
+                                    "¿Eliminar de favoritos?", "Confirmar", JOptionPane.YES_NO_OPTION);
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                lineasExistentes.remove(linea);
+                                try (FileWriter fw = new FileWriter(archivoFavoritos, false)) {
+                                    for (String ruta : lineasExistentes) {
+                                        fw.write(ruta + "\n");
+                                    }
+                                } catch (IOException ex) {
+                                    JOptionPane.showMessageDialog(null, "Error al actualizar favoritos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                                JOptionPane.showMessageDialog(null, "Se ha borrado de favoritos. Le quedan " + (10 - lineasExistentes.size()) + " espacios disponibles.", "Favoritos", JOptionPane.INFORMATION_MESSAGE);
+                                abrirFavoritos();
+                            }
+                        }
+                    }
+                });
+
+                Archivo_FAVORITOS.add(menuItem);
+            }
+
+            Archivo_FAVORITOS.revalidate();
+            Archivo_FAVORITOS.repaint();
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(null, "Error al manejar archivos favoritos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Icono de "X" en código
+    private ImageIcon createIconX() {
+        int width = 16, height = 16;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        g.setColor(Color.RED);
+        g.setStroke(new BasicStroke(2));
+        g.drawLine(3, 3, 13, 13);
+        g.drawLine(3, 13, 13, 3);
+        g.dispose();
+        return new ImageIcon(image);
+    }
 
 };
 

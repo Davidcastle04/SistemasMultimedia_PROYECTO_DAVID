@@ -588,4 +588,7 @@ public class IMAGEN  {
                 break;
         }
     }
+    public File getArchivo(){
+        return foto;
+    }
 }

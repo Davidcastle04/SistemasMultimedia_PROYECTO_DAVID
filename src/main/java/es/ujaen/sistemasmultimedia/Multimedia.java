@@ -18,7 +18,7 @@ public interface Multimedia {
         // Variables para el panel de la Musica
         JPanel panelAudio = new JPanel();
         JScrollPane jScrollPane1 = new JScrollPane();
-
+        File actual;
 
         JButton retrocesoMusica = new JButton("RETROCESO");
         JButton AddColaMusica = new JButton("  Añadir cola de reproducción  ");
@@ -165,6 +165,9 @@ public interface Multimedia {
         }
 
         public void addMusica(File archivoSeleccionado) {
+        }
+        public File getArchivo(){
+            return actual;
         }
 
         private void CambiarAudio(File archivo) {

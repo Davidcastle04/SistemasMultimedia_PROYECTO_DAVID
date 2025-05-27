@@ -474,5 +474,8 @@ public class VIDEO {
             JOptionPane.showMessageDialog(null, "Error al modificar los metadatos: " + e.getMessage());
         }
     }
+    public File getArchivo(){
+        return archivoVideo;
+    }
 
 }
