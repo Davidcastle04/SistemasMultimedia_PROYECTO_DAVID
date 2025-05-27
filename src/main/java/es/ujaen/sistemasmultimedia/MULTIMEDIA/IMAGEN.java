@@ -11,7 +11,12 @@ import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.imaging.formats.tiff.write.*;
 
-import javax.imageio.ImageIO;
+import javax.imageio.*;
+import javax.imageio.metadata.*;
+import javax.imageio.stream.ImageOutputStream;
+
+import org.w3c.dom.*;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -220,7 +225,11 @@ public class IMAGEN  {
         });
 
 
-        return jPanel4;
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(jPanel5, BorderLayout.CENTER); // Imagen con scroll
+        mainPanel.add(jPanel4, BorderLayout.EAST);   // Panel lateral de metadatos y botones
+
+        return mainPanel;
     }
 
     private void crearAlbum(){
@@ -500,9 +509,10 @@ public class IMAGEN  {
 
             case 2:
                 try {
-                    // Crear un panel con campos para rellenar
-                    JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+                    String nombreArchivo = foto.getName().toLowerCase();
 
+                    // Crear panel para todos los formatos
+                    JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
                     JTextField isoField = new JTextField();
                     JTextField fechaYhoraField = new JTextField();
                     JTextField velObtField = new JTextField();
@@ -535,46 +545,73 @@ public class IMAGEN  {
                         break;
                     }
 
-                    // Leer los metadatos existentes
-                    JpegImageMetadata jpegMetadata = (JpegImageMetadata) Imaging.getMetadata(foto);
-                    TiffOutputSet outputSet = (jpegMetadata != null && jpegMetadata.getExif() != null)
-                            ? jpegMetadata.getExif().getOutputSet()
-                            : new TiffOutputSet();
+                    if (nombreArchivo.endsWith(".jpg") || nombreArchivo.endsWith(".jpeg")) {
+                        // --- JPEG: Modificar EXIF ---
+                        Object metadata = Imaging.getMetadata(foto);
+                        TiffOutputSet outputSet = null;
+                        if (metadata instanceof JpegImageMetadata jpegMetadata && jpegMetadata.getExif() != null) {
+                            outputSet = jpegMetadata.getExif().getOutputSet();
+                        } else {
+                            outputSet = new TiffOutputSet();
+                        }
 
-                    TiffOutputDirectory exifDir = outputSet.getOrCreateExifDirectory();
+                        TiffOutputDirectory exifDir = outputSet.getOrCreateExifDirectory();
 
-                    exifDir.removeField(ExifTagConstants.EXIF_TAG_ISO);
-                    exifDir.removeField(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL);
-                    exifDir.removeField(ExifTagConstants.EXIF_TAG_EXPOSURE_TIME);
-                    exifDir.removeField(ExifTagConstants.EXIF_TAG_MODEL_2);
+                        exifDir.removeField(ExifTagConstants.EXIF_TAG_ISO);
+                        exifDir.removeField(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL);
+                        exifDir.removeField(ExifTagConstants.EXIF_TAG_EXPOSURE_TIME);
+                        exifDir.removeField(ExifTagConstants.EXIF_TAG_MODEL_2);
 
-                    exifDir.add(ExifTagConstants.EXIF_TAG_ISO, (short) Integer.parseInt(iso));
-                    exifDir.add(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL, fechaYhora);
+                        exifDir.add(ExifTagConstants.EXIF_TAG_ISO, (short) Integer.parseInt(iso));
+                        exifDir.add(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL, fechaYhora);
 
-                    // Convertir a RationalNumber (por ejemplo: 1/200 = 0.005)
-                    double fraccion = 1.0;
-                    if (velObt.contains("/")) {
-                        String[] partes = velObt.split("/");
-                        fraccion = Double.parseDouble(partes[0]) / Double.parseDouble(partes[1]);
+                        // Convertir a RationalNumber (por ejemplo: 1/200 = 0.005)
+                        double fraccion = 1.0;
+                        if (velObt.contains("/")) {
+                            String[] partes = velObt.split("/");
+                            fraccion = Double.parseDouble(partes[0]) / Double.parseDouble(partes[1]);
+                        } else {
+                            fraccion = Double.parseDouble(velObt);
+                        }
+                        RationalNumber exposureTime = RationalNumber.valueOf(fraccion);
+                        exifDir.add(ExifTagConstants.EXIF_TAG_EXPOSURE_TIME, exposureTime);
+                        try {
+                            exifDir.add(ExifTagConstants.EXIF_TAG_USER_COMMENT, modelo);
+                        } catch (ImageWriteException e) {
+                            System.out.printf("Error al escribir el modelo de la cámara: %s%n", e.getMessage());
+                        }
+
+                        ModificaMetadatos(fechaYhora, modelo, (foto.length() / (1024 * 1024)) + " MB", iso, velObt);
+
+                        File tempFile = new File(foto.getParent(), foto.getName() + ".tmp");
+                        try (OutputStream os = new FileOutputStream(tempFile)) {
+                            new ExifRewriter().updateExifMetadataLossless(foto, os, outputSet);
+                        }
+                        // Solo si todo fue bien, reemplaza el original
+                        if (foto.delete()) {
+                            if (!tempFile.renameTo(foto)) {
+                                JOptionPane.showMessageDialog(null, "Error al renombrar el archivo temporal. La imagen puede estar corrupta.", "Error", JOptionPane.ERROR_MESSAGE);
+                                break;
+                            }
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No se pudo borrar el archivo original. La imagen puede estar corrupta.", "Error", JOptionPane.ERROR_MESSAGE);
+                            break;
+                        }
+
+                        JOptionPane.showMessageDialog(null, "Metadatos modificados correctamente (JPEG).");
+
+                    } else if (nombreArchivo.endsWith(".png")) {
+                        // --- PNG: Añadir comentario ---
+                        String comentario = "ISO: " + iso + " | Fecha y Hora: " + fechaYhora + " | Velocidad: " + velObt + " | Modelo: " + modelo;
+                        try {
+                            escribirComentarioPNG(foto, comentario);
+                            JOptionPane.showMessageDialog(null, "Comentario añadido correctamente (PNG).");
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(null, "Error al escribir comentario en PNG: " + ex.getMessage());
+                        }
                     } else {
-                        fraccion = Double.parseDouble(velObt);
+                        JOptionPane.showMessageDialog(null, "Solo se pueden modificar metadatos en imágenes JPEG o añadir comentario en PNG.", "Formato no soportado", JOptionPane.WARNING_MESSAGE);
                     }
-                    RationalNumber exposureTime = RationalNumber.valueOf(fraccion);
-                    exifDir.add(ExifTagConstants.EXIF_TAG_EXPOSURE_TIME, exposureTime);
-                    try{
-                        exifDir.add(ExifTagConstants.EXIF_TAG_USER_COMMENT, modelo);
-                    } catch (ImageWriteException e) {
-                        System.out.printf("Error al escribir el modelo de la cámara: %s%n", e.getMessage());
-                    }
-
-                    ModificaMetadatos(fechaYhora, modelo, (foto.length() / (1024 * 1024)) + " MB", iso, velObt);
-
-                    File nuevoArchivo = new File(foto.getParent(), foto.getName());
-                    try (OutputStream os = new FileOutputStream(nuevoArchivo)) {
-                        new ExifRewriter().updateExifMetadataLossless(foto, os, outputSet);
-                    }
-
-                    JOptionPane.showMessageDialog(null, "Metadatos modificados correctamente.");
                 } catch (Exception e) {
                     e.printStackTrace();
                     JOptionPane.showMessageDialog(null, "Error al modificar los metadatos: " + e.getMessage());
@@ -588,7 +625,40 @@ public class IMAGEN  {
                 break;
         }
     }
+
     public File getArchivo(){
         return foto;
+    }
+
+    public void escribirComentarioPNG(File pngFile, String comentario) throws Exception {
+        BufferedImage image = ImageIO.read(pngFile);
+        ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
+        ImageWriteParam param = writer.getDefaultWriteParam();
+
+        IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(image), param);
+
+        String nativeFormat = metadata.getNativeMetadataFormatName();
+        IIOMetadataNode root = (IIOMetadataNode) metadata.getAsTree(nativeFormat);
+
+        IIOMetadataNode textEntry = new IIOMetadataNode("tEXtEntry");
+        textEntry.setAttribute("keyword", "Comentario");
+        textEntry.setAttribute("value", comentario);
+
+        IIOMetadataNode text = new IIOMetadataNode("tEXt");
+        text.appendChild(textEntry);
+        root.appendChild(text);
+
+        metadata.setFromTree(nativeFormat, root);
+
+        File tempFile = new File(pngFile.getParent(), pngFile.getName() + ".tmp");
+        try (ImageOutputStream ios = ImageIO.createImageOutputStream(tempFile)) {
+            writer.setOutput(ios);
+            writer.write(metadata, new IIOImage(image, null, metadata), param);
+        }
+        writer.dispose();
+
+        if (pngFile.delete()) {
+            tempFile.renameTo(pngFile);
+        }
     }
 }

@@ -439,35 +439,38 @@ public class VIDEO {
 
     private void modificarYGuardarMetadatos(File videoFile, String fechaYhora, String bitrate, String titulo) {
         try {
-            // Ruta del archivo de salida
+            // Archivo de salida temporal
             File archivoModificado = new File(videoFile.getParent(), "modificado_" + videoFile.getName());
+            if (archivoModificado.exists()) {
+                archivoModificado.delete();
+            }
 
-            // Comando FFmpeg para sobrescribir los metadatos
+            // Construir el comando FFmpeg
+            // Solo se añaden metadatos válidos
             String comando = String.format(
-                "ffmpeg -i \"%s\" -metadata creation_time=\"%s\" -metadata bitrate=\"%s\" -metadata title=\"%s\" -c copy \"%s\"",
+                "ffmpeg -y -i \"%s\" -metadata creation_time=\"%s\" -metadata title=\"%s\" -c copy \"%s\"",
                 videoFile.getAbsolutePath(),
                 fechaYhora,
-                bitrate,
                 titulo,
                 archivoModificado.getAbsolutePath()
             );
 
             // Ejecutar el comando
-            Process proceso = Runtime.getRuntime().exec(comando);
+            Process proceso = Runtime.getRuntime().exec(new String[] { "bash", "-c", comando });
 
             // Leer la salida del proceso
-            BufferedReader reader = new BufferedReader(new InputStreamReader(proceso.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(proceso.getErrorStream()));
             String linea;
+            StringBuilder errorMsg = new StringBuilder();
             while ((linea = reader.readLine()) != null) {
-                System.out.println(linea);
+                errorMsg.append(linea).append("\n");
             }
 
-            // Esperar a que el proceso termine
             int exitCode = proceso.waitFor();
             if (exitCode == 0) {
                 JOptionPane.showMessageDialog(null, "Metadatos modificados y guardados correctamente.");
             } else {
-                JOptionPane.showMessageDialog(null, "Error al modificar los metadatos. Código de salida: " + exitCode);
+                JOptionPane.showMessageDialog(null, "Error al modificar los metadatos. Código de salida: " + exitCode + "\n" + errorMsg);
             }
         } catch (Exception e) {
             e.printStackTrace();

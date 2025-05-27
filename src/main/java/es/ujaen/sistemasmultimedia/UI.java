@@ -240,8 +240,10 @@ public class UI extends JFrame {
                     if (comp instanceof JComponent) {
                         Object titulo = ((JComponent) comp).getClientProperty("tituloReal");
                         if (titulo != null) {
-                            ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: " + titulo);
+                            ArchivoAbierto.setHorizontalAlignment(JTextField.CENTER);
+                            ArchivoAbierto.setText(acortarTexto("TIPO DE FICHERO ABIERTO: " + titulo, MAX_TEXTO_ARCHIVO));
                         } else {
+                            ArchivoAbierto.setHorizontalAlignment(JTextField.CENTER);
                             ArchivoAbierto.setText("ABRA UN FICHERO :) ");
                         }
                     } else {
@@ -270,7 +272,8 @@ public class UI extends JFrame {
 
 
 
-        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO");
+        ArchivoAbierto.setHorizontalAlignment(JTextField.CENTER);
+        ArchivoAbierto.setText("ABRA UN FICHERO :) ");
         label1.setText("MultiStudio");
         M_Archivos.setText("Archivos");
         Archivos_guardarFichero.setText("Guardar Fichero");
@@ -335,7 +338,7 @@ public class UI extends JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addComponent(jSeparator1)
-                        .addGroup(layout.createSequentialGroup().addGap(102, 102, 102).addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addGap(98, 98, 98))
+                        .addGroup(layout.createSequentialGroup().addGap(102, 102, 102).addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, 300, GroupLayout.PREFERRED_SIZE).addGap(98, 98, 98))
                         .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addContainerGap(47, Short.MAX_VALUE).addComponent(jTabbedPane1, GroupLayout.DEFAULT_SIZE, 792, GroupLayout.PREFERRED_SIZE).addGap(43, 43, 43))
         );
         layout.setVerticalGroup(
@@ -593,8 +596,8 @@ public class UI extends JFrame {
                 if (comp instanceof JComponent) {
                     Object titulo = ((JComponent) comp).getClientProperty("tituloReal");
                     if (titulo != null) {
-                        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: " + titulo);
-                    } else {
+                        ArchivoAbierto.setText(acortarTexto("TIPO DE FICHERO ABIERTO: " + titulo, MAX_TEXTO_ARCHIVO));
+                      } else {
                         ArchivoAbierto.setText("ABRA UN FICHERO :) ");
                     }
                 } else {
@@ -606,6 +609,9 @@ public class UI extends JFrame {
             }
             actualizarMenus();
         });
+
+        ArchivoAbierto.setColumns(30); 
+        ArchivoAbierto.setMaximumSize(new Dimension(300, 30));
 
     }
 
@@ -622,18 +628,16 @@ public class UI extends JFrame {
         // Filtro multimedia: audio, video e imagen
         javax.swing.filechooser.FileNameExtensionFilter filtro = new javax.swing.filechooser.FileNameExtensionFilter(
                 "Archivos multimedia (Audio, Video, Imagen)",
-                ".mp3", ".wav", ".flac",".mp4", ".avi", ".mkv",".jpg", ".jpeg", ".png", ".gif"
+                "mp3", "wav", "flac","mp4", "avi", "mkv","jpg", "jpeg", "png", "gif"
         );
         selector.setFileFilter(filtro);
         return selector;
     }
 
     public void actualizarMenus() {
-        int index = jTabbedPane1.getSelectedIndex();
         boolean hayContenido = jTabbedPane1.getTabCount() > 1; // La primera pestaña es la de arrastrar/examinar
-        boolean hayMusica = abiertomusica && musica != null && PANELMAP.get(jTabbedPane1.getSelectedComponent()) instanceof Multimedia.Musica1;
 
-        if (index == 0) { 
+        if (jTabbedPane1.getSelectedIndex() == 0) {
             Editar.setVisible(false);
             Archivos_addFav.setVisible(false);
         } else {
@@ -722,9 +726,9 @@ public class UI extends JFrame {
         @Override
         public String getDescription() {
             if (tipo == 'a') {
-                return "Archivo *.ALBUM";
+                return "Archivo con extensión .album";
             } else if (tipo == 'p') {
-                return "Archivo *.PYLIST";
+                return "Archivo con extensión .pylist";
             }
             return "Archivos (ALBUM o PYLIST)";
         }
@@ -982,6 +986,23 @@ public class UI extends JFrame {
         g.drawLine(3, 13, 13, 3);
         g.dispose();
         return new ImageIcon(image);
+    }
+
+    private static final int MAX_TEXTO_ARCHIVO = 40; // o el valor que prefieras
+    private static final int MAX_TEXTO_TAB = 15;
+
+    private String acortarTexto(String texto, int max) {
+        if (texto.length() > max) {
+            return texto.substring(0, max - 3) + "...";
+        }
+        return texto;
+    }
+
+    private String acortarTituloTab(String titulo) {
+        if (titulo.length() > MAX_TEXTO_TAB) {
+            return titulo.substring(0, MAX_TEXTO_TAB - 3) + "...";
+        }
+        return titulo;
     }
 
 };
