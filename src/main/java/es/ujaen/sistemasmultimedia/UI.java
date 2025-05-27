@@ -63,6 +63,9 @@ public class UI extends JFrame {
 
 
     public UI() {
+    
+        UIManager.put("OptionPane.yesButtonText", "Sí");
+        UIManager.put("OptionPane.noButtonText", "No");
         initComponents();
         abrirFavoritos(); // Cargar los favoritos al iniciar la interfaz
         new DropTarget(jPanel1, new DropTargetListener() {
@@ -201,6 +204,160 @@ public class UI extends JFrame {
 
         label3.setText("Arrastre un archivo hacia está ventana o bien pulse en examinar");
         examinarArchivoBoton.setLabel("Examinar Archivos");
+
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
+        jPanel1Layout.setVerticalGroup(
+                jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+
+        ImageIcon imagenAdd = new ImageIcon("../MultiStudio/imagenes/add.png");
+        Image imagenEscalada = imagenAdd.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        ImageIcon imagenEscaladaAdd = new ImageIcon(imagenEscalada);
+        jTabbedPane1.addTab("",imagenEscaladaAdd, jPanel1);
+
+        jTabbedPane1.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int index = jTabbedPane1.getSelectedIndex();
+                if (index != -1) {
+                    Component comp = jTabbedPane1.getComponentAt(index);
+                    if (comp instanceof JComponent) {
+                        Object titulo = ((JComponent) comp).getClientProperty("tituloReal");
+                        if (titulo != null) {
+                            ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: " + titulo);
+                        } else {
+                            ArchivoAbierto.setText("ABRA UN FICHERO :) ");
+                        }
+                    } else {
+                        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: Desconocido");
+                    }
+                }
+                if (jTabbedPane1.getTabCount() <= 1) {
+                    abiertomusica = false;
+                }
+                actualizarMenus();
+            }
+        });
+
+
+        panel1.setLayout(panel1Layout);
+        panel1Layout.setHorizontalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
+        panel1Layout.setVerticalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
+
+
+
+        ArchivoAbierto.setBackground(new java.awt.Color(153, 153, 255));
+        ArchivoAbierto.setForeground(new java.awt.Color(255, 255, 255));
+        ArchivoAbierto.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
+        ArchivoAbierto.setOpaque(true);
+        label1.setFont(new java.awt.Font("DejaVu Sans Condensed", 2, 36));
+
+
+
+        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO");
+        label1.setText("MultiStudio");
+        M_Archivos.setText("Archivos");
+        Archivos_guardarFichero.setText("Guardar Fichero");
+        guardar_orig_sin_mod.setText("Archivo Original SIN MODIFICAR");
+        guardar_mod.setText("Guardar Modificaciones");
+        Archivos_abrirFichero.setText("Abrir Fichero");
+        Archicos_recientes.setText("Archivos Recientes");
+        Archivos_cargarPlaylist.setText("Cargar Playlist");
+        Archivo_FAVORITOS.setText("Abrir Favoritos");
+        Archivos_cargarAlbum.setText("Cargar Album Fotos");
+        Archivos_addFav.setText("Añadir a Favoritos");
+        Editar.setText("Editar");
+        Editar_CambiarNombre.setText("Cambiar Nombre Fichero");
+        Editar_ModMetadatos.setText("Modificar Metadatos");
+        Editar_AddCaratula.setText("Añadir Caratula");
+        Editar_AddPlaylist.setText("Crear Nueva PlayList");
+        Editar_AddAlbum.setText("Crear Album de Fotos");
+        Ayuda.setText("Ayuda");
+        abrirAyuda.setText("Abrir Ayuda");
+
+
+        Archivos_guardarFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/guardar.png"));
+        Archivos_abrirFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/open.png"));
+        Archicos_recientes.setIcon(new ImageIcon("../MultiStudio/imagenes/historial.png"));
+        Archivo_FAVORITOS.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito2.png"));
+        Archivos_cargarPlaylist.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
+        Archivos_cargarAlbum.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
+        Archivos_addFav.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito.png"));
+        Editar_CambiarNombre.setIcon(new ImageIcon("../MultiStudio/imagenes/fichero.png"));
+        Editar_ModMetadatos.setIcon(new ImageIcon("../MultiStudio/imagenes/metadatos.png"));
+        Editar_AddCaratula.setIcon(new ImageIcon("../MultiStudio/imagenes/caratula.png"));
+        Editar_AddPlaylist.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
+        Editar_AddAlbum.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
+        abrirAyuda.setIcon(new ImageIcon("../MultiStudio/imagenes/ayuda.png"));
+
+
+        setJMenuBar(jMenuBar1);
+
+
+        Editar.add(Editar_CambiarNombre);
+        jMenuBar1.add(M_Archivos);
+        M_Archivos.add(Archivos_addFav);
+        M_Archivos.add(Archivo_FAVORITOS);
+        M_Archivos.add(Archivos_cargarAlbum);
+        M_Archivos.add(Archivos_cargarPlaylist);
+        M_Archivos.add(Archicos_recientes);
+        M_Archivos.add(Archivos_abrirFichero);
+        Archivos_guardarFichero.add(guardar_orig_sin_mod);
+        Archivos_guardarFichero.add(guardar_mod);
+        M_Archivos.add(Archivos_guardarFichero);
+        Archivos_guardarFichero.setVisible(false);
+        Editar.add(Editar_ModMetadatos);
+        Editar.add(Editar_AddCaratula);
+        Editar.add(Editar_AddPlaylist);
+        Editar.add(Editar_AddAlbum);
+        jMenuBar1.add(Editar);
+        Ayuda.add(abrirAyuda);
+        jMenuBar1.add(Ayuda);
+        Archivos_guardarFichero.setVisible(false);
+
+        GroupLayout layout = new GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(jSeparator1)
+                        .addGroup(layout.createSequentialGroup().addGap(102, 102, 102).addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addGap(98, 98, 98))
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addContainerGap(47, Short.MAX_VALUE).addComponent(jTabbedPane1, GroupLayout.DEFAULT_SIZE, 792, GroupLayout.PREFERRED_SIZE).addGap(43, 43, 43))
+        );
+        layout.setVerticalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addGap(21, 21, 21)
+                                                .addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(21, 21, 21))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addContainerGap()
+                                                .addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(30, 30, 30)))
+                                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jTabbedPane1, GroupLayout.PREFERRED_SIZE, 465, GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(32, Short.MAX_VALUE))
+        );
+        actualizarMenus();
+        pack();
+
         examinarArchivoBoton.addActionListener(evt -> {
             JFileChooser selector = getJFileChooser();
 
@@ -265,6 +422,7 @@ public class UI extends JFrame {
                 }
             }
         });
+
         Archivos_cargarAlbum.addActionListener(evt -> {
             JFileChooser selector = CargarFicherosINI('a');
 
@@ -347,185 +505,30 @@ public class UI extends JFrame {
         });
 
         Archivos_addFav.addActionListener(e -> {
-             int index = jTabbedPane1.getSelectedIndex();
-             if (index != -1) {
-                 Component componente = jTabbedPane1.getComponentAt(index);
-                 if (componente instanceof JPanel) {
-                     Object objeto = PANELMAP.get(componente);
-                     if (objeto instanceof IMAGEN) {
-                         IMAGEN imagen = (IMAGEN) objeto;
-                         File archivoSeleccionado = imagen.getArchivo(); // Método para obtener el archivo
-                         addFavoritos(archivoSeleccionado);
-                     } else if (objeto instanceof VIDEO) {
-                         VIDEO video = (VIDEO) objeto;
-                         File archivoSeleccionado = video.getArchivo(); // Método para obtener el archivo
-                         addFavoritos(archivoSeleccionado);
-                     } else if (objeto instanceof Multimedia.Musica1) {
-                         Multimedia.Musica1 musica = (Multimedia.Musica1) objeto;
-                         File archivoSeleccionado = musica.getArchivo(); // Método para obtener el archivo
-                         addFavoritos(archivoSeleccionado);
-                     } else {
-                         JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
-                     }
-                 }
-             }
-         });
-
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE))
-        );
-
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)
-        );
-
-
-        ImageIcon imagenAdd = new ImageIcon("../MultiStudio/imagenes/add.png");
-        Image imagenEscalada = imagenAdd.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-        ImageIcon imagenEscaladaAdd = new ImageIcon(imagenEscalada);
-        jTabbedPane1.addTab("",imagenEscaladaAdd, jPanel1);
-
-        jTabbedPane1.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int index = jTabbedPane1.getSelectedIndex();
-                if (index != -1) {
-                    Component comp = jTabbedPane1.getComponentAt(index);
-                    if (comp instanceof JComponent) {
-                        Object titulo = ((JComponent) comp).getClientProperty("tituloReal");
-                        if (titulo != null) {
-                            ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: " + titulo);
-                        } else {
-                            ArchivoAbierto.setText("ABRA UN FICHERO :) ");
-                        }
+            int index = jTabbedPane1.getSelectedIndex();
+            if (index != -1) {
+                Component componente = jTabbedPane1.getComponentAt(index);
+                if (componente instanceof JPanel) {
+                    Object objeto = PANELMAP.get(componente);
+                    if (objeto instanceof IMAGEN) {
+                        IMAGEN imagen = (IMAGEN) objeto;
+                        File archivoSeleccionado = imagen.getArchivo(); // Método para obtener el archivo
+                        addFavoritos(archivoSeleccionado);
+                    } else if (objeto instanceof VIDEO) {
+                        VIDEO video = (VIDEO) objeto;
+                        File archivoSeleccionado = video.getArchivo(); // Método para obtener el archivo
+                        addFavoritos(archivoSeleccionado);
+                    } else if (objeto instanceof Multimedia.Musica1) {
+                        Multimedia.Musica1 musica = (Multimedia.Musica1) objeto;
+                        File archivoSeleccionado = musica.getArchivo(); // Método para obtener el archivo
+                        addFavoritos(archivoSeleccionado);
                     } else {
-                        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: Desconocido");
+                        JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
         });
-
-
-        panel1.setLayout(panel1Layout);
-        panel1Layout.setHorizontalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
-        panel1Layout.setVerticalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
-
-
-
-        ArchivoAbierto.setBackground(new java.awt.Color(153, 153, 255));
-        ArchivoAbierto.setForeground(new java.awt.Color(255, 255, 255));
-        ArchivoAbierto.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
-        ArchivoAbierto.setOpaque(true);
-        label1.setFont(new java.awt.Font("DejaVu Sans Condensed", 2, 36));
-
-
-
-        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO");
-        label1.setText("MultiStudio");
-        M_Archivos.setText("Archivos");
-        Archivos_guardarFichero.setText("Guardar Fichero");
-        guardar_orig_sin_mod.setText("Archivo Original SIN MODIFICAR");
-        guardar_mod.setText("Guardar Modificaciones");
-        Archivos_abrirFichero.setText("Abrir Fichero");
-        Archicos_recientes.setText("Archivos Recientes");
-        Archivos_cargarPlaylist.setText("Cargar Playlist");
-        Archivo_FAVORITOS.setText("Abrir Favoritos");
-        Archivos_cargarAlbum.setText("Cargar Album Fotos");
-        Archivos_addFav.setText("Añadir a Favoritos");
-        Editar.setText("Editar");
-        Editar_CambiarNombre.setText("Cambiar Nombre Fichero");
-        Editar_ModMetadatos.setText("Modificar Metadatos");
-        Editar_AddCaratula.setText("Añadir Caratula");
-        Editar_AddPlaylist.setText("Crear Nueva PlayList");
-        Editar_AddAlbum.setText("Crear Album de Fotos");
-        Ayuda.setText("Ayuda");
-        abrirAyuda.setText("Abrir Ayuda");
-
-
-        Archivos_guardarFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/guardar.png"));
-        Archivos_abrirFichero.setIcon(new ImageIcon("../MultiStudio/imagenes/open.png"));
-        Archicos_recientes.setIcon(new ImageIcon("../MultiStudio/imagenes/historial.png"));
-        Archivo_FAVORITOS.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito2.png"));
-        Archivos_cargarPlaylist.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
-        Archivos_cargarAlbum.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
-        Archivos_addFav.setIcon(new ImageIcon("../MultiStudio/imagenes/favorito.png"));
-        Editar_CambiarNombre.setIcon(new ImageIcon("../MultiStudio/imagenes/fichero.png"));
-        Editar_ModMetadatos.setIcon(new ImageIcon("../MultiStudio/imagenes/metadatos.png"));
-        Editar_AddCaratula.setIcon(new ImageIcon("../MultiStudio/imagenes/caratula.png"));
-        Editar_AddPlaylist.setIcon(new ImageIcon("../MultiStudio/imagenes/playlist.png"));
-        Editar_AddAlbum.setIcon(new ImageIcon("../MultiStudio/imagenes/album.png"));
-        abrirAyuda.setIcon(new ImageIcon("../MultiStudio/imagenes/ayuda.png"));
-
-
-        setJMenuBar(jMenuBar1);
-
-
-        Editar.add(Editar_CambiarNombre);
-        jMenuBar1.add(M_Archivos);
-        M_Archivos.add(Archivos_addFav);
-        M_Archivos.add(Archivo_FAVORITOS);
-        M_Archivos.add(Archivos_cargarAlbum);
-        M_Archivos.add(Archivos_cargarPlaylist);
-        M_Archivos.add(Archicos_recientes);
-        M_Archivos.add(Archivos_abrirFichero);
-        Archivos_guardarFichero.add(guardar_orig_sin_mod);
-        Archivos_guardarFichero.add(guardar_mod);
-        M_Archivos.add(Archivos_guardarFichero);
-        Editar.add(Editar_ModMetadatos);
-        Editar.add(Editar_AddCaratula);
-        Editar.add(Editar_AddPlaylist);
-        Editar.add(Editar_AddAlbum);
-        jMenuBar1.add(Editar);
-        Ayuda.add(abrirAyuda);
-        jMenuBar1.add(Ayuda);
-
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(jSeparator1)
-                        .addGroup(layout.createSequentialGroup().addGap(102, 102, 102).addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,GroupLayout.PREFERRED_SIZE).addGap(98, 98, 98))
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup().addContainerGap(47, Short.MAX_VALUE).addComponent(jTabbedPane1, GroupLayout.DEFAULT_SIZE, 792, GroupLayout.PREFERRED_SIZE).addGap(43, 43, 43))
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addGap(21, 21, 21)
-                                                .addComponent(label1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(21, 21, 21))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addContainerGap()
-                                                .addComponent(ArchivoAbierto, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(30, 30, 30)))
-                                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jTabbedPane1, GroupLayout.PREFERRED_SIZE, 465, GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(32, Short.MAX_VALUE))
-        );
-
-        pack();
-
-        jTabbedPane1.addChangeListener(e -> {
-            if (jTabbedPane1.getTabCount() <= 1) {
-                abiertomusica = false;
-            }
-            actualizarMenus();
-        });
-        actualizarMenus();
-
+        
         abrirAyuda.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, mensajeAyuda, "Ayuda", JOptionPane.INFORMATION_MESSAGE);
         });
@@ -584,20 +587,25 @@ public class UI extends JFrame {
         });
 
         jTabbedPane1.addChangeListener(e -> {
-          int index = jTabbedPane1.getSelectedIndex();
-          if (index != -1) {
-              Component componente = jTabbedPane1.getComponentAt(index);
-              VIDEO video = (VIDEO) PANELMAP.get(componente);
-              if (video != null) {
-                  video.cambioPestana(true);
-              } else {
-                  PANELMAP.values().stream()
-                      .filter(obj -> obj instanceof VIDEO)
-                      .map(obj -> (VIDEO) obj)
-                      .forEach(v -> v.cambioPestana(false));
-              }
-          }
-      });
+            int index = jTabbedPane1.getSelectedIndex();
+            if (index != -1) {
+                Component comp = jTabbedPane1.getComponentAt(index);
+                if (comp instanceof JComponent) {
+                    Object titulo = ((JComponent) comp).getClientProperty("tituloReal");
+                    if (titulo != null) {
+                        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: " + titulo);
+                    } else {
+                        ArchivoAbierto.setText("ABRA UN FICHERO :) ");
+                    }
+                } else {
+                    ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: Desconocido");
+                }
+            }
+            if (jTabbedPane1.getTabCount() <= 1) {
+                abiertomusica = false;
+            }
+            actualizarMenus();
+        });
 
     }
 
@@ -621,16 +629,32 @@ public class UI extends JFrame {
     }
 
     public void actualizarMenus() {
+        int index = jTabbedPane1.getSelectedIndex();
         boolean hayContenido = jTabbedPane1.getTabCount() > 1; // La primera pestaña es la de arrastrar/examinar
-        boolean hayMusica = abiertomusica && musica != null;
+        boolean hayMusica = abiertomusica && musica != null && PANELMAP.get(jTabbedPane1.getSelectedComponent()) instanceof Multimedia.Musica1;
 
-        // Menú "Editar"
-        Editar.setEnabled(hayContenido);
+        if (index == 0) { 
+            Editar.setVisible(false);
+            Archivos_addFav.setVisible(false);
+        } else {
+            Editar.setVisible(hayContenido);
+            Archivos_addFav.setVisible(hayContenido);
+            Archivos_guardarFichero.setVisible(false);
 
-        // Opciones dentro de "Archivos"
-
-        Archivos_addFav.setEnabled(hayContenido); // Añadir a favoritos
-        Archivos_guardarFichero.setEnabled(hayContenido); // Guardar (y submenús)
+            if (PANELMAP.get(jTabbedPane1.getSelectedComponent()) instanceof IMAGEN) {
+                Editar_AddCaratula.setEnabled(false);
+                Editar_AddPlaylist.setEnabled(false);
+                Editar_AddAlbum.setEnabled(true);
+            } else if (PANELMAP.get(jTabbedPane1.getSelectedComponent()) instanceof VIDEO) {
+                Editar_AddCaratula.setEnabled(false);
+                Editar_AddPlaylist.setEnabled(false);
+                Editar_AddAlbum.setEnabled(false);
+            } else {
+                Editar_AddCaratula.setEnabled(false);
+                Editar_AddPlaylist.setEnabled(true);
+                Editar_AddAlbum.setEnabled(false);
+            }
+        }
     }
 
     public void IMAGENCONF(Boolean r){
@@ -709,9 +733,9 @@ public class UI extends JFrame {
     return selector;
 }
 
-    public void modificaGuardar(boolean t){
-        hayCambiosSinGuardar=t;
-    }
+    //    public void modificaGuardar(boolean t){
+    //        hayCambiosSinGuardar=t;
+    //    }
 
     private void abrirColecciones(File archivo){
         if (archivo.getName().endsWith(".album")){
@@ -948,7 +972,6 @@ public class UI extends JFrame {
         }
     }
 
-    // Icono de "X" en código
     private ImageIcon createIconX() {
         int width = 16, height = 16;
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
