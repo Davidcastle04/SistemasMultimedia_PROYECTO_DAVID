@@ -51,7 +51,6 @@ public class VIDEO {
 
     public VIDEO(UI i ) {
         interfaz = i;
-        i.InicioVIDEO();
         jPanel3.setLayout(jPanel3Layout);
     }
 

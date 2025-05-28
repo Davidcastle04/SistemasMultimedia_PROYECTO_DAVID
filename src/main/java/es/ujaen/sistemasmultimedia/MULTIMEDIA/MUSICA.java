@@ -7,23 +7,21 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.List;
 import javax.imageio.ImageIO;
 import com.mpatric.mp3agic.*;
 import es.ujaen.sistemasmultimedia.INTERFAZ.UI;
 import es.ujaen.sistemasmultimedia.METADATOS_ONLINE.DiscogsSearcher;
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.images.Artwork;
-import org.jaudiotagger.tag.images.ArtworkFactory;
+
 import org.json.JSONObject;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.base.Equalizer;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
-import javax.swing.Timer;
+
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -72,6 +70,7 @@ public class MUSICA {
     public MUSICA(List<VIDEO> videosAbiertos , UI i ) {
         this.videosAbiertos = videosAbiertos;
         interfaz = i;
+        i.abiertomusica=true;
         inicializarComponentes();
     }
 
@@ -387,8 +386,7 @@ public class MUSICA {
 
     private void setButtonIcon(JButton button, String iconName) {
         try {
-            String path = System.getProperty("user.dir") + "/imagenes/" + iconName;
-            ImageIcon icon = new ImageIcon(path);
+            ImageIcon icon = new ImageIcon("imagenes/" + iconName);
             button.setIcon(new ImageIcon(icon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
             button.setHorizontalTextPosition(SwingConstants.CENTER);
             button.setVerticalTextPosition(SwingConstants.BOTTOM);
@@ -401,8 +399,7 @@ public class MUSICA {
     private void mostrarImagenGenericaOCartel() {
         panelCaratula.setLayout(new GridBagLayout());
         try {
-            String path = System.getProperty("user.dir") + "/imagenes/caratuladefault.png";
-            BufferedImage genericImg = ImageIO.read(new FileInputStream(path));
+            BufferedImage genericImg = ImageIO.read(new FileInputStream("imagenes/caratuladefault.png"));
             if (genericImg != null) {
                 JLabel picLabel = new JLabel(new ImageIcon(genericImg.getScaledInstance(180, 180, Image.SCALE_SMOOTH)));
                 panelCaratula.add(picLabel, new GridBagConstraints());
@@ -537,102 +534,338 @@ public class MUSICA {
     }
 
     public void modificarMETADATOSONLINE(File archivo) {
-        String cancion = JOptionPane.showInputDialog(null, "Introduce el nombre de la canción:", "Buscar metadatos online", JOptionPane.PLAIN_MESSAGE);
-        if (cancion == null || cancion.isEmpty()) return;
+        // Panel para solicitar título y artista en una sola ventana
+        JPanel panelEntrada = new JPanel(new GridLayout(0, 2, 5, 5)); // 0 filas (se ajusta), 2 columnas, gaps
+        JTextField campoTituloBusqueda = new JTextField(25);
+        JTextField campoArtistaBusqueda = new JTextField(25);
 
-        try {
-            // Llamada a Discogs
-            JSONObject datos = DiscogsSearcher.buscarEnDiscogs(cancion);
-            if (datos == null) {
-                JOptionPane.showMessageDialog(null, "No se encontraron datos online.");
+        panelEntrada.add(new JLabel("Título de la canción:"));
+        panelEntrada.add(campoTituloBusqueda);
+        panelEntrada.add(new JLabel("Artista (opcional):"));
+        panelEntrada.add(campoArtistaBusqueda);
+
+        int resultadoDialogo = JOptionPane.showConfirmDialog(null, panelEntrada,
+                "Buscar Metadatos Online en Discogs", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (resultadoDialogo == JOptionPane.OK_OPTION) {
+            String tituloCancion = campoTituloBusqueda.getText();
+            String artistaCancion = campoArtistaBusqueda.getText();
+
+            if (tituloCancion == null || tituloCancion.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "El título de la canción no puede estar vacío.", "Entrada inválida", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            // artistaCancion puede ser vacío, DiscogsSearcher lo maneja.
 
-            // Extraer campos
-            String titulo = datos.optString("titulo");
-            String artista = datos.optString("artista");
-            String album = datos.optString("album");
-            String genero = datos.optString("genero");
-            String pista = datos.optString("pista");
-            String caratulaURL = datos.optString("caratula");
+            try {
+                JSONObject datos = DiscogsSearcher.buscarEnDiscogs(tituloCancion, artistaCancion);
+                if (datos == null) {
+                    Object[] options = {"Cancelar", "Introducir Metadatos Manualmente", "Importar Metadatos Online"};
+                    int choice = JOptionPane.showOptionDialog(null,
+                            "No se encontraron datos online para '" + tituloCancion + (artistaCancion.isEmpty() ? "" : " - " + artistaCancion) + "'.\n¿Qué desea hacer?",
+                            "Búsqueda en Discogs Fallida",
+                            JOptionPane.DEFAULT_OPTION, // Usar DEFAULT_OPTION para botones personalizados
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,    // Sin icono personalizado
+                            options, // Los textos de los botones
+                            options[0]); // Botón "Cancelar" seleccionado por defecto
 
-            JPanel panel = new JPanel(new GridLayout(6, 2));
-            JTextField campoTitulo = new JTextField(titulo);
-            JTextField campoArtista = new JTextField(artista);
-            JTextField campoAlbum = new JTextField(album);
-            JTextField campoGenero = new JTextField(genero);
-            JTextField campoPista = new JTextField(pista);
-            JLabel caratulaLabel = new JLabel(caratulaURL != null ? "<html><img src='" + caratulaURL + "' width='100'></html>" : "Sin carátula");
+                    if (choice == 1) { // "Introducir Metadatos Manualmente"
+                        mostrarFormularioManual(archivo);
+                    } else if (choice == 2) { // "Importar Metadatos Online"
+                        modificarMETADATOSONLINE(archivo); // Llama recursivamente para reintentar
+                    }
+                    // Si choice == 0 ("Cancelar") o JOptionPane.CLOSED_OPTION, simplemente retorna.
+                    return; // Es importante salir del método aquí.
+                }
 
-            panel.add(new JLabel("Título:")); panel.add(campoTitulo);
-            panel.add(new JLabel("Artista:")); panel.add(campoArtista);
-            panel.add(new JLabel("Álbum:")); panel.add(campoAlbum);
-            panel.add(new JLabel("Género:")); panel.add(campoGenero);
-            panel.add(new JLabel("Pista:")); panel.add(campoPista);
-            panel.add(new JLabel("Carátula:")); panel.add(caratulaLabel);
 
-            int opcion = JOptionPane.showOptionDialog(null, panel, "Editar/Importar Metadatos",
-                    JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-                    new String[]{"Importar metadatos online", "Editar manualmente"}, "Importar");
+                // Extraer campos del JSON devuelto por DiscogsSearcher
+                String titulo = datos.optString("titulo");
+                String artista = datos.optString("artista");
+                String album = datos.optString("album");
+                String genero = datos.optString("genero");
+                String pista = datos.optString("pista");
+                String caratulaURL = datos.optString("caratula");
 
-            if (opcion == JOptionPane.CLOSED_OPTION) return;
+                // Panel principal para el diálogo de edición
+                JPanel panelEdicion = new JPanel(new BorderLayout(15, 10)); // Gap entre componentes
+                panelEdicion.setBorder(new EmptyBorder(10, 10, 10, 10)); // Margen exterior
 
-            // Si eliges importar: usa los datos actuales
-            // Si eliges editar: usa lo que escribió el usuario
+                // Panel izquierdo para los campos de metadatos (usando GridBagLayout)
+                JPanel metadataFieldsPanel = new JPanel(new GridBagLayout());
+                GridBagConstraints gbcMeta = new GridBagConstraints();
+                gbcMeta.insets = new Insets(3, 3, 3, 3); // Espaciado entre componentes
+                gbcMeta.anchor = GridBagConstraints.WEST; // Alinear etiquetas a la izquierda
 
-            String finalTitulo = campoTitulo.getText();
-            String finalArtista = campoArtista.getText();
-            String finalAlbum = campoAlbum.getText();
-            String finalGenero = campoGenero.getText();
-            String finalPista = campoPista.getText();
+                JTextField campoTituloEdit = new JTextField(titulo, 20); // Ancho sugerido
+                JTextField campoArtistaEdit = new JTextField(artista, 20);
+                JTextField campoAlbumEdit = new JTextField(album, 20);
+                JTextField campoGeneroEdit = new JTextField(genero, 20);
+                JTextField campoPistaEdit = new JTextField(pista, 20);
 
-            modificarMetadatosArchivo(archivo, finalTitulo, finalArtista, finalAlbum, finalGenero, finalPista, caratulaURL);
+                // Fila 0: Título
+                gbcMeta.gridx = 0; gbcMeta.gridy = 0;
+                metadataFieldsPanel.add(new JLabel("Titulo:"), gbcMeta);
+                gbcMeta.gridx = 1; gbcMeta.fill = GridBagConstraints.HORIZONTAL; gbcMeta.weightx = 1.0;
+                metadataFieldsPanel.add(campoTituloEdit, gbcMeta);
+                gbcMeta.fill = GridBagConstraints.NONE; gbcMeta.weightx = 0; // Reset
 
-            JOptionPane.showMessageDialog(null, "¡Metadatos modificados correctamente!");
+                // Fila 1: Artista
+                gbcMeta.gridx = 0; gbcMeta.gridy = 1;
+                metadataFieldsPanel.add(new JLabel("Artista:"), gbcMeta);
+                gbcMeta.gridx = 1; gbcMeta.fill = GridBagConstraints.HORIZONTAL; gbcMeta.weightx = 1.0;
+                metadataFieldsPanel.add(campoArtistaEdit, gbcMeta);
+                gbcMeta.fill = GridBagConstraints.NONE; gbcMeta.weightx = 0;
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error al modificar los metadatos.");
+                // Fila 2: Álbum
+                gbcMeta.gridx = 0; gbcMeta.gridy = 2;
+                metadataFieldsPanel.add(new JLabel("Álbum:"), gbcMeta);
+                gbcMeta.gridx = 1; gbcMeta.fill = GridBagConstraints.HORIZONTAL; gbcMeta.weightx = 1.0;
+                metadataFieldsPanel.add(campoAlbumEdit, gbcMeta);
+                gbcMeta.fill = GridBagConstraints.NONE; gbcMeta.weightx = 0;
+
+                // Fila 3: Género
+                gbcMeta.gridx = 0; gbcMeta.gridy = 3;
+                metadataFieldsPanel.add(new JLabel("Género:"), gbcMeta);
+                gbcMeta.gridx = 1; gbcMeta.fill = GridBagConstraints.HORIZONTAL; gbcMeta.weightx = 1.0;
+                metadataFieldsPanel.add(campoGeneroEdit, gbcMeta);
+                gbcMeta.fill = GridBagConstraints.NONE; gbcMeta.weightx = 0;
+
+                // Fila 4: Pista
+                gbcMeta.gridx = 0; gbcMeta.gridy = 4;
+                metadataFieldsPanel.add(new JLabel("Pista:"), gbcMeta);
+                gbcMeta.gridx = 1; gbcMeta.fill = GridBagConstraints.HORIZONTAL; gbcMeta.weightx = 1.0;
+                metadataFieldsPanel.add(campoPistaEdit, gbcMeta);
+                gbcMeta.fill = GridBagConstraints.NONE; gbcMeta.weightx = 0;
+                
+                // Panel derecho para la carátula
+                JPanel coverPanel = new JPanel(new BorderLayout(5,5)); // Gap vertical entre título y carátula
+
+                JLabel caratulaDisplayLabel = new JLabel();
+                caratulaDisplayLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                caratulaDisplayLabel.setVerticalAlignment(SwingConstants.CENTER);
+                caratulaDisplayLabel.setPreferredSize(new Dimension(150, 150)); // Tamaño deseado
+                caratulaDisplayLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY)); // Borde opcional
+
+                if (caratulaURL != null && !caratulaURL.isEmpty()) {
+                    try {
+                        URL url = new URL(caratulaURL);
+                        BufferedImage img = ImageIO.read(url);
+                        if (img != null) {
+                            Image scaledImg = img.getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+                            caratulaDisplayLabel.setIcon(new ImageIcon(scaledImg));
+                        } else {
+                            caratulaDisplayLabel.setText("<html><center>Sin carátula<br>disponible</center></html>");
+                        }
+                    } catch (IOException ex) {
+                        caratulaDisplayLabel.setText("<html><center>Error al<br>cargar carátula</center></html>");
+                    }
+                } else {
+                    caratulaDisplayLabel.setText("<html><center>Sin carátula<br>disponible</center></html>");
+                }
+                
+                JLabel coverTitleLabel = new JLabel("Carátula:");
+                coverTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                coverPanel.add(coverTitleLabel, BorderLayout.NORTH);
+                coverPanel.add(caratulaDisplayLabel, BorderLayout.CENTER);
+
+                // Añadir paneles al panel principal del diálogo
+                panelEdicion.add(metadataFieldsPanel, BorderLayout.CENTER); // Los campos de texto se expandirán
+                panelEdicion.add(coverPanel, BorderLayout.EAST);    // La carátula a la derecha
+
+                Object[] optiones = {"Cancelar", "Introducir Metadatos Manualmente", "Importar Metadatos Online"};
+                int opcionEdicion = JOptionPane.showOptionDialog(null,
+                        panelEdicion,
+                        "Confirmar Metadatos",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        optiones,
+                        optiones[1]);
+
+                if (opcionEdicion == 1) { // "Introducir Metadatos Manualmente"
+                    mostrarFormularioManual(archivo);
+                }
+
+                if (opcionEdicion == 2) {
+                    String finalTitulo = campoTituloEdit.getText();
+                    String finalArtista = campoArtistaEdit.getText();
+                    String finalAlbum = campoAlbumEdit.getText();
+                    String finalGenero = campoGeneroEdit.getText();
+                    String finalPista = campoPistaEdit.getText();
+
+                    modificarMetadatosArchivo(archivo, finalTitulo, finalArtista, finalAlbum, finalGenero, finalPista, caratulaURL);
+                    JOptionPane.showMessageDialog(null, "¡Metadatos modificados correctamente!");
+                    // Actualizar la UI si es necesario
+                    mostrarMetadatos(archivo);
+                    mostrarCaratula(archivo);
+                }
+
+                if(opcionEdicion==0){
+                    return; // Si se selecciona "Cancelar", simplemente retorna sin hacer nada
+                }
+            } catch (Exception e) {
+                e.printStackTrace(); // Es bueno mantener el log del error
+
+                Object[] options = {"Cancelar", "Introducir Metadatos Manualmente", "Importar Metadatos Online"};
+                String errorMessage = "Ocurrió un error durante la búsqueda online: " + e.getMessage() + "\n¿Qué desea hacer?";
+
+                int choice = JOptionPane.showOptionDialog(null,
+                        errorMessage,
+                        "Error en Búsqueda Online",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.ERROR_MESSAGE,
+                        null,
+                        options,
+                        options[0]); // "Cancelar" por defecto
+
+                if (choice == 1) { // "Introducir Metadatos Manualmente"
+                    mostrarFormularioManual(archivo);
+                } else if (choice == 2) { // "Importar Metadatos Online"
+                    modificarMETADATOSONLINE(archivo); // Llama recursivamente para reintentar
+                }
+                // Si choice == 0 ("Cancelar") o JOptionPane.CLOSED_OPTION, simplemente retorna.
+                return; // Salir del método después de manejar el error.
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "Búsqueda de metadatos cancelada.", "Cancelado", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
+    private void mostrarFormularioManual(File archivo) {
+    JPanel panelManual = new JPanel(new GridLayout(0, 2, 5, 5));
+    JTextField campoTitulo = new JTextField();
+    JTextField campoArtista = new JTextField();
+    JTextField campoAlbum = new JTextField();
+    JTextField campoGenero = new JTextField();
+    JTextField campoPista = new JTextField();
+
+    panelManual.add(new JLabel("Título:")); panelManual.add(campoTitulo);
+    panelManual.add(new JLabel("Artista:")); panelManual.add(campoArtista);
+    panelManual.add(new JLabel("Álbum:")); panelManual.add(campoAlbum);
+    panelManual.add(new JLabel("Género:")); panelManual.add(campoGenero);
+    panelManual.add(new JLabel("Pista:")); panelManual.add(campoPista);
+
+    int res = JOptionPane.showConfirmDialog(null, panelManual, "Metadatos manuales",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+    if (res == JOptionPane.OK_OPTION) {
+        modificarMetadatosArchivo(archivo,
+                campoTitulo.getText(),
+                campoArtista.getText(),
+                campoAlbum.getText(),
+                campoGenero.getText(),
+                campoPista.getText(),
+                null); // sin carátula
+        mostrarMetadatos(archivo);
+        mostrarCaratula(archivo);
+        JOptionPane.showMessageDialog(null, "¡Metadatos añadidos manualmente!");
+    }
+}
+
+
     public void modificarMetadatosArchivo(File archivo, String titulo, String artista, String album, String genero, String pista, String caratulaURL) {
+        String originalFilePath = archivo.getAbsolutePath();
+        String tempFilePath = originalFilePath + ".tmp";
+
         try {
-            AudioFile f = AudioFileIO.read(archivo);
-            Tag tag = f.getTagOrCreateAndSetDefault();
+            Mp3File mp3file = new Mp3File(archivo);
+            ID3v2 id3v2Tag;
 
-            tag.setField(FieldKey.TITLE, titulo);
-            tag.setField(FieldKey.ARTIST, artista);
-            tag.setField(FieldKey.ALBUM, album);
-            tag.setField(FieldKey.GENRE, genero);
-            tag.setField(FieldKey.TRACK, pista);
+            if (mp3file.hasId3v2Tag()) {
+                id3v2Tag = mp3file.getId3v2Tag();
+            } else {
+                // Puedes elegir ID3v23Tag o ID3v24Tag según prefieras
+                id3v2Tag = new ID3v24Tag();
+                mp3file.setId3v2Tag(id3v2Tag);
+            }
 
-            // Descargar imagen desde URL y guardar en archivo temporal
-            File tempImageFile = null;
+            // Establecer metadatos de texto
+            id3v2Tag.setTitle(titulo);
+            id3v2Tag.setArtist(artista);
+            id3v2Tag.setAlbum(album);
+            id3v2Tag.setGenreDescription(genero); // mp3agic usa descripción para el género textual
+            id3v2Tag.setTrack(pista);
+            // mp3agic no tiene un campo directo para "Año" en ID3v2 de forma tan simple como jaudiotagger.
+            // Podrías usar id3v2Tag.setYear(anio) si el año es parte de los parámetros.
+
+            // Manejar la carátula
             if (caratulaURL != null && !caratulaURL.isEmpty()) {
-                URL url = new URL(caratulaURL);
-                try (InputStream is = url.openStream()) {
-                    tempImageFile = File.createTempFile("cover", ".img");
-                    try (FileOutputStream fos = new FileOutputStream(tempImageFile)) {
-                        byte[] buffer = new byte[4096];
-                        int bytesRead;
-                        while ((bytesRead = is.read(buffer)) != -1) {
-                            fos.write(buffer, 0, bytesRead);
+                HttpURLConnection connection = null;
+                try {
+                    URL url = new URL(caratulaURL);
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestProperty("User-Agent", "MultiStudio/1.0"); // Buena práctica
+                    String mimeType = connection.getContentType();
+
+                    // Si no se obtiene, intentar inferir de la URL
+                    if (mimeType == null || mimeType.equals("application/octet-stream") || mimeType.equals("image/unknown")) {
+                        if (caratulaURL.toLowerCase().endsWith(".jpg") || caratulaURL.toLowerCase().endsWith(".jpeg")) {
+                            mimeType = "image/jpeg";
+                        } else if (caratulaURL.toLowerCase().endsWith(".png")) {
+                            mimeType = "image/png";
+                        } else {
+                            mimeType = "image/jpeg"; // Default o manejar error si es crítico
                         }
                     }
 
-                    // Crear Artwork desde el archivo temporal
-                    Artwork artwork = ArtworkFactory.createArtworkFromFile(tempImageFile);
-
-                    tag.deleteArtworkField(); // Quitar la carátula anterior si existe
-                    tag.setField(artwork);    // Añadir la nueva carátula
+                    try (InputStream is = connection.getInputStream();
+                         ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = is.read(buffer)) != -1) {
+                            baos.write(buffer, 0, bytesRead);
+                        }
+                        byte[] imageData = baos.toByteArray();
+                        id3v2Tag.setAlbumImage(imageData, mimeType);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error al descargar o procesar la carátula: " + e.getMessage());
+                    // Opcional: mostrar un JOptionPane al usuario
+                } finally {
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
                 }
+            } else {
+                 // Opcional: si no hay URL de carátula, podrías borrar la existente
+                 // id3v2Tag.clearAlbumImage();
             }
 
+            mp3file.save(tempFilePath); // Guardar en un archivo temporal
 
-            f.commit();
-        } catch (Exception e) {
+            // Reemplazar el archivo original con el temporal de forma segura
+            File originalFile = new File(originalFilePath);
+            File tempFile = new File(tempFilePath);
+
+            // Aquí sería ideal detener la reproducción si 'archivo' es el que se está reproduciendo
+            // para evitar problemas de bloqueo de archivo, pero por simplicidad lo omitimos.
+            // El usuario podría necesitar recargar la canción.
+
+            if (originalFile.delete()) {
+                if (!tempFile.renameTo(originalFile)) {
+                    System.err.println("Error al renombrar el archivo temporal: " + tempFile.getName() + " a " + originalFile.getName());
+                    // Intentar restaurar el temporal si es posible o loguear
+                    tempFile.delete(); // Limpiar el temporal si el renombrado falla
+                    JOptionPane.showMessageDialog(null, "Error al guardar los cambios en el archivo original (renombrado falló).", "Error de guardado", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    System.out.println("Metadatos guardados correctamente en: " + originalFile.getName());
+                }
+            } else {
+                System.err.println("Error al borrar el archivo original: " + originalFile.getName());
+                tempFile.delete(); // Limpiar el temporal si el original no se pudo borrar
+                JOptionPane.showMessageDialog(null, "Error al guardar los cambios (no se pudo borrar el original).", "Error de guardado", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (IOException | NotSupportedException | UnsupportedTagException | InvalidDataException e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al modificar los metadatos con mp3agic: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            // Asegurarse de que el archivo temporal se borre si existe y hubo un error antes del renombrado
+            File tempFileOnError = new File(tempFilePath);
+            if (tempFileOnError.exists()) {
+                tempFileOnError.delete();
+            }
         }
     }
 
