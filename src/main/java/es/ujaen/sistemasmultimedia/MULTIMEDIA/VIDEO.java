@@ -1,6 +1,6 @@
 package es.ujaen.sistemasmultimedia.MULTIMEDIA;
 
-import es.ujaen.sistemasmultimedia.UI;
+import es.ujaen.sistemasmultimedia.INTERFAZ.UI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;

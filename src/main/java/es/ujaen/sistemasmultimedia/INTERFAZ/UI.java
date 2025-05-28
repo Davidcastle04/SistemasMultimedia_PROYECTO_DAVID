@@ -1,6 +1,7 @@
-package es.ujaen.sistemasmultimedia;
+package es.ujaen.sistemasmultimedia.INTERFAZ;
 
 import es.ujaen.sistemasmultimedia.MULTIMEDIA.IMAGEN;
+import es.ujaen.sistemasmultimedia.MULTIMEDIA.MUSICA;
 import es.ujaen.sistemasmultimedia.MULTIMEDIA.VIDEO;
 
 import javax.swing.*;
@@ -26,11 +27,12 @@ public class UI extends JFrame {
 
     public Map<JPanel, Object> PANELMAP = new HashMap<>();
     boolean hayCambiosSinGuardar = false;
-    JTextField ArchivoAbierto = new JTextField();
-    private JPanel jPanel1 = new JPanel();
-    private JTabbedPane jTabbedPane1 = new JTabbedPane();
+    public JTextField ArchivoAbierto = new JTextField();
+    private final JPanel jPanel1 = new JPanel();
+    private final JTabbedPane jTabbedPane1 = new JTabbedPane();
     boolean abiertomusica=false;
-    Multimedia.Musica1 musica = null;
+    List<VIDEO> videosAbiertos = new ArrayList<>();
+    MUSICA musica = null;
     JSeparator jSeparator1 = new JSeparator();
     Label label3 = new Label();
     JButton examinarArchivoBoton = new JButton();
@@ -57,17 +59,15 @@ public class UI extends JFrame {
     JMenuItem abrirAyuda = new JMenuItem();
     GroupLayout panel1Layout = new GroupLayout(panel1);
     GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-    String mensajeAyuda = "MultiStudio: Permite abrir, gestionar y reproducir archivos multimedia (audio, video, imágenes).\n"
-            + "Puedes cargar playlists y álbumes de fotos.\n"
-            + "Autor: David Castillo Serrano dcs00037@red.ujaen.es";
 
 
     public UI() {
-    
+        actualizarMenus();
         UIManager.put("OptionPane.yesButtonText", "Sí");
         UIManager.put("OptionPane.noButtonText", "No");
         initComponents();
         abrirFavoritos(); // Cargar los favoritos al iniciar la interfaz
+        cargarArchivosRecientes(); // Cargar los recientes al iniciar
         new DropTarget(jPanel1, new DropTargetListener() {
             @Override
             public void dragEnter(DropTargetDragEvent dtde) {}
@@ -106,9 +106,14 @@ public class UI extends JFrame {
                                 if (filePath.endsWith(".mp3") || filePath.endsWith(".wav") || filePath.endsWith(".flac")) {
                                     if (!abiertomusica) {
                                         abiertomusica = true;
-                                        musica = new Multimedia.Musica1();
-                                        Component contenido = musica.AUDIO(file, ArchivoAbierto);
-                                        jTabbedPane1.addTab(null, contenido);
+                                        MUSICA musica = new MUSICA(videosAbiertos,UI.this);
+                                        addReciente(file);
+                                        JPanel panel = musica.AUDIO(file,ArchivoAbierto);
+                                        PANELMAP.put(panel,musica);
+                                        if (panel instanceof JComponent) {
+                                            ((JComponent) panel).putClientProperty("tituloReal", "Musica " + file.getName());
+                                        }
+                                        jTabbedPane1.addTab(null,panel);
                                         jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                                 new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
                                                     abiertomusica = false;
@@ -118,7 +123,7 @@ public class UI extends JFrame {
                                         if (musica != null) {
                                             musica.addMusica(file);
                                         } else {
-                                            musica = new Multimedia.Musica1();
+                                            musica = new MUSICA(videosAbiertos,UI.this);
                                             Component contenido = musica.AUDIO(file, ArchivoAbierto);
                                             jTabbedPane1.addTab(null, contenido);
                                             jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
@@ -130,15 +135,14 @@ public class UI extends JFrame {
                                     }
                                 } else if (filePath.endsWith(".mp4") || filePath.endsWith(".avi") || filePath.endsWith(".mkv")) {
                                     VIDEO video = new VIDEO(UI.this);
-                                    addReciente(file);
+                                    videosAbiertos.add(video);
                                     JPanel panel = video.getVideo(file);
                                     PANELMAP.put(panel,video);
-                                    Component contenido = panel;
-                                    if (contenido instanceof JComponent) {
-                                        ((JComponent) contenido).putClientProperty("tituloReal", "Video " + file.getName());
+                                    if (panel instanceof JComponent) {
+                                        panel.putClientProperty("tituloReal", "Video " + file.getName());
                                     }
                                     addReciente(file);
-                                    jTabbedPane1.addTab(null, contenido);
+                                    jTabbedPane1.addTab(null, panel);
                                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                             new PestanaConCerrar(jTabbedPane1, "Video" + file.getName(), UI.this::actualizarMenus));
                                 } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png") || filePath.endsWith(".gif")) {
@@ -146,11 +150,10 @@ public class UI extends JFrame {
                                     IMAGEN imagen = new IMAGEN(UI.this);
                                     JPanel panel = imagen.img(file);
                                     PANELMAP.put(panel,imagen);
-                                    Component contenido = panel;
-                                    if (contenido instanceof JComponent) {
-                                        ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + file.getName());
+                                    if (panel instanceof JComponent) {
+                                        panel.putClientProperty("tituloReal", "Imagen " + file.getName());
                                     }
-                                    jTabbedPane1.addTab(null, contenido);
+                                    jTabbedPane1.addTab(null, panel);
                                     addReciente(file);
                                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                             new PestanaConCerrar(jTabbedPane1, "Imagen "+file.getName(), UI.this::actualizarMenus));
@@ -194,7 +197,6 @@ public class UI extends JFrame {
 
     }
     private void initComponents() {
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("MultiStudio");
         setIconImage(new ImageIcon("../MultiStudio/imagenes/logo.jpg").getImage());
@@ -229,6 +231,112 @@ public class UI extends JFrame {
         ImageIcon imagenAdd = new ImageIcon("../MultiStudio/imagenes/add.png");
         Image imagenEscalada = imagenAdd.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon imagenEscaladaAdd = new ImageIcon(imagenEscalada);
+        jTabbedPane1.addTab("",imagenEscaladaAdd, jPanel1);
+
+        jTabbedPane1.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int index = jTabbedPane1.getSelectedIndex();
+                if (index != -1) {
+                    Component comp = jTabbedPane1.getComponentAt(index);
+                    if (comp instanceof JComponent) {
+                        Object titulo = ((JComponent) comp).getClientProperty("tituloReal");
+                        if (titulo != null) {
+                            ArchivoAbierto.setHorizontalAlignment(JTextField.CENTER);
+                            ArchivoAbierto.setText(acortarTexto("TIPO DE FICHERO ABIERTO: " + titulo, MAX_TEXTO_ARCHIVO));
+                        } else {
+                            ArchivoAbierto.setHorizontalAlignment(JTextField.CENTER);
+                            ArchivoAbierto.setText("ABRA UN FICHERO :) ");
+                        }
+                    } else {
+                        ArchivoAbierto.setText("TIPO DE FICHERO ABIERTO: Desconocido");
+                    }
+                }
+                if (jTabbedPane1.getTabCount() <= 1) {
+                    abiertomusica = false;
+                }
+                actualizarMenus();
+            }
+        });
+
+
+        panel1.setLayout(panel1Layout);
+        panel1Layout.setHorizontalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
+        panel1Layout.setVerticalGroup(panel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 135, Short.MAX_VALUE));
+
+
+
+        ArchivoAbierto.setBackground(new java.awt.Color(153, 153, 255));
+        ArchivoAbierto.setForeground(new java.awt.Color(255, 255, 255));
+        ArchivoAbierto.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED));
+        ArchivoAbierto.setOpaque(true);
+        label1.setFont(new java.awt.Font("DejaVu Sans Condensed", 2, 36));
+
+
+
+        ArchivoAbierto.setHorizontalAlignment(JTextField.CENTER);
+        ArchivoAbierto.setText("ABRA UN FICHERO :) ");
+        label1.setText("MultiStudio");
+        M_Archivos.setText("Archivos");
+        Archivos_guardarFichero.setText("Guardar Fichero");
+        guardar_orig_sin_mod.setText("Archivo Original SIN MODIFICAR");
+        guardar_mod.setText("Guardar Modificaciones");
+        Archivos_abrirFichero.setText("Abrir Fichero");
+        Archicos_recientes.setText("Archivos Recientes");
+        Archivos_cargarPlaylist.setText("Cargar Playlist");
+        Archivo_FAVORITOS.setText("Abrir Favoritos");
+        Archivos_cargarAlbum.setText("Cargar Album Fotos");
+        Archivos_addFav.setText("Añadir a Favoritos");
+        JMenu Editar = new JMenu();
+        JMenuItem Editar_CambiarNombre = new JMenuItem();
+        JMenuItem Editar_ModMetadatos = new JMenuItem();
+        JMenuItem Editar_AddCaratula = new JMenuItem();
+        JMenuItem Editar_AddPlaylist = new JMenuItem();
+        JMenuItem Editar_AddAlbum = new JMenuItem();
+        JMenu Ayuda = new JMenu();
+        JMenuItem abrirAyuda = new JMenuItem();
+        GroupLayout panel1Layout = new GroupLayout(panel1);
+        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
+        String mensajeAyuda = """
+                MultiStudio: Permite abrir, gestionar y reproducir archivos multimedia (audio, video, imágenes).
+                Puedes cargar playlists y álbumes de fotos.
+                Autor: David Castillo Serrano dcs00037@red.ujaen.es""";
+
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("MultiStudio");
+        setIconImage(new ImageIcon("../MultiStudio/imagenes/logo.jpg").getImage());
+        setBackground(new java.awt.Color(153, 153, 153));
+        setCursor(new java.awt.Cursor(Cursor.HAND_CURSOR));
+        jTabbedPane1.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+
+        label3.setText("Arrastre un archivo hacia está ventana o bien pulse en examinar");
+        examinarArchivoBoton.setLabel("Examinar Archivos");
+
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
+        jPanel1Layout.setVerticalGroup(
+                jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(label3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(examinarArchivoBoton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+
+        imagenAdd = new ImageIcon("../MultiStudio/imagenes/add.png");
+        imagenEscalada = imagenAdd.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        imagenEscaladaAdd = new ImageIcon(imagenEscalada);
         jTabbedPane1.addTab("",imagenEscaladaAdd, jPanel1);
 
         jTabbedPane1.addChangeListener(new ChangeListener() {
@@ -332,7 +440,6 @@ public class UI extends JFrame {
         jMenuBar1.add(Editar);
         Ayuda.add(abrirAyuda);
         jMenuBar1.add(Ayuda);
-        Archivos_guardarFichero.setVisible(false);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -375,9 +482,14 @@ public class UI extends JFrame {
                 if (nombre.endsWith(".mp3") || nombre.endsWith(".wav") || nombre.endsWith(".flac")) {
                     if (!abiertomusica) {
                         abiertomusica = true;
-                        musica = new Multimedia.Musica1();
-                        Component contenido = musica.AUDIO(archivoSeleccionado, ArchivoAbierto);
-                        jTabbedPane1.addTab(null, contenido);
+                        MUSICA musica = new MUSICA(videosAbiertos,this);
+                        addReciente(archivoSeleccionado);
+                        JPanel panel = musica.AUDIO(archivoSeleccionado,ArchivoAbierto);
+                        PANELMAP.put(panel,musica);
+                        if (panel instanceof JComponent) {
+                            ((JComponent) panel).putClientProperty("tituloReal", "Musica " + archivoSeleccionado.getName());
+                        }
+                        jTabbedPane1.addTab(null,panel);
                         jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                 new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
                                     abiertomusica = false;
@@ -387,7 +499,7 @@ public class UI extends JFrame {
                         if (musica != null) {
                             musica.addMusica(archivoSeleccionado);
                         } else {
-                            musica = new Multimedia.Musica1();
+                            musica = new MUSICA(videosAbiertos,this);
                             Component contenido = musica.AUDIO(archivoSeleccionado, ArchivoAbierto);
                             jTabbedPane1.addTab(null, contenido);
                             jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
@@ -399,15 +511,15 @@ public class UI extends JFrame {
                     }
                 } else if (nombre.endsWith(".mp4") || nombre.endsWith(".avi") || nombre.endsWith(".mkv")) {
                     VIDEO video = new VIDEO(this);
+                    videosAbiertos.add(video);
                     addReciente(archivoSeleccionado);
                     JPanel panel = video.getVideo(archivoSeleccionado);
                     PANELMAP.put(panel,video);
-                    Component contenido = panel;
-                    if (contenido instanceof JComponent) {
-                        ((JComponent) contenido).putClientProperty("tituloReal", "Video " + archivoSeleccionado.getName());
+                    if (panel instanceof JComponent) {
+                        ((JComponent) panel).putClientProperty("tituloReal", "Video " + archivoSeleccionado.getName());
                     }
                     addReciente(archivoSeleccionado);
-                    jTabbedPane1.addTab(null, contenido);
+                    jTabbedPane1.addTab(null, panel);
                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                             new PestanaConCerrar(jTabbedPane1, "Video" + archivoSeleccionado.getName(), UI.this::actualizarMenus));
                 } else if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png") || nombre.endsWith(".gif")) {
@@ -415,11 +527,10 @@ public class UI extends JFrame {
                     addReciente(archivoSeleccionado);
                     JPanel panel = imagen.img(archivoSeleccionado);
                     PANELMAP.put(panel,imagen);
-                    Component contenido = panel;
-                    if (contenido instanceof JComponent) {
-                        ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + archivoSeleccionado.getName());
+                    if (panel instanceof JComponent) {
+                        ((JComponent) panel).putClientProperty("tituloReal", "Imagen " + archivoSeleccionado.getName());
                     }
-                    jTabbedPane1.addTab(null, contenido);
+                    jTabbedPane1.addTab(null, panel);
                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                             new PestanaConCerrar(jTabbedPane1, "Imagen "+archivoSeleccionado.getName(), UI.this::actualizarMenus));
                 }
@@ -463,9 +574,14 @@ public class UI extends JFrame {
                 if (nombre.endsWith(".mp3") || nombre.endsWith(".wav") || nombre.endsWith(".flac")) {
                     if (!abiertomusica) {
                         abiertomusica = true;
-                        musica = new Multimedia.Musica1();
-                        Component contenido = musica.AUDIO(archivoSeleccionado, ArchivoAbierto);
-                        jTabbedPane1.addTab(null, contenido);
+                        MUSICA musica = new MUSICA(videosAbiertos,this);
+                        addReciente(archivoSeleccionado);
+                        JPanel panel = musica.AUDIO(archivoSeleccionado,ArchivoAbierto);
+                        PANELMAP.put(panel,musica);
+                        if (panel instanceof JComponent) {
+                            ((JComponent) panel).putClientProperty("tituloReal", "Musica " + archivoSeleccionado.getName());
+                        }
+                        jTabbedPane1.addTab(null,panel);
                         jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                                 new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
                                     abiertomusica = false;
@@ -475,7 +591,7 @@ public class UI extends JFrame {
                         if (musica != null) {
                             musica.addMusica(archivoSeleccionado);
                         } else {
-                            musica = new Multimedia.Musica1();
+                            musica = new MUSICA(videosAbiertos,this);
                             Component contenido = musica.AUDIO(archivoSeleccionado, ArchivoAbierto);
                             jTabbedPane1.addTab(null, contenido);
                             jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
@@ -496,10 +612,9 @@ public class UI extends JFrame {
                     IMAGEN imagen = new IMAGEN(UI.this);
                     JPanel panel = imagen.img(archivoSeleccionado);
                     PANELMAP.put(panel,imagen);
-                    Component contenido = panel;
                     jTabbedPane1.putClientProperty("tituloReal","Imagen" + archivoSeleccionado.getName());
                     addReciente(archivoSeleccionado);
-                    jTabbedPane1.addTab(null, contenido);
+                    jTabbedPane1.addTab(null, panel);
                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                             new PestanaConCerrar(jTabbedPane1, "Imagen "+archivoSeleccionado.getName(), UI.this::actualizarMenus));
                 }
@@ -513,16 +628,13 @@ public class UI extends JFrame {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
                     Object objeto = PANELMAP.get(componente);
-                    if (objeto instanceof IMAGEN) {
-                        IMAGEN imagen = (IMAGEN) objeto;
+                    if (objeto instanceof IMAGEN imagen) {
                         File archivoSeleccionado = imagen.getArchivo(); // Método para obtener el archivo
                         addFavoritos(archivoSeleccionado);
-                    } else if (objeto instanceof VIDEO) {
-                        VIDEO video = (VIDEO) objeto;
+                    } else if (objeto instanceof VIDEO video) {
                         File archivoSeleccionado = video.getArchivo(); // Método para obtener el archivo
                         addFavoritos(archivoSeleccionado);
-                    } else if (objeto instanceof Multimedia.Musica1) {
-                        Multimedia.Musica1 musica = (Multimedia.Musica1) objeto;
+                    } else if (objeto instanceof MUSICA musica) {
                         File archivoSeleccionado = musica.getArchivo(); // Método para obtener el archivo
                         addFavoritos(archivoSeleccionado);
                     } else {
@@ -542,19 +654,33 @@ public class UI extends JFrame {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
                     Object objeto = PANELMAP.get(componente);
-                    if (objeto instanceof IMAGEN) {
-                        IMAGEN imagen = (IMAGEN) objeto;
+                    if (objeto instanceof IMAGEN imagen) {
                         imagen.TratarArchivo(1, null); // Llamar al método de IMAGEN
-                    } else if (objeto instanceof VIDEO) {
-                        VIDEO video = (VIDEO) objeto;
+                    } else if (objeto instanceof VIDEO video) {
                         video.TratarArchivo(1, null); // Llamar al método de VIDEO
-                    } else {
+                    } else if (objeto instanceof MUSICA musica) {
+                        musica.TratarArchivo(1, null); // Llamar al método de MUSICA
+                    }else{
                         JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
         });
 
+        Editar_AddCaratula.addActionListener(e -> {
+            int index = jTabbedPane1.getSelectedIndex();
+            if (index != -1) {
+                Component componente = jTabbedPane1.getComponentAt(index);
+                if (componente instanceof JPanel) {
+                    MUSICA musica = (MUSICA) PANELMAP.get(componente);
+                    if (musica != null) {
+                        musica.TratarArchivo(3, null);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
         Editar_AddAlbum.addActionListener(e ->{
             int index = jTabbedPane1.getSelectedIndex();
             if (index != -1) {
@@ -576,12 +702,12 @@ public class UI extends JFrame {
                 Component componente = jTabbedPane1.getComponentAt(index);
                 if (componente instanceof JPanel) {
                     Object objeto = PANELMAP.get(componente);
-                    if (objeto instanceof IMAGEN) {
-                        IMAGEN imagen = (IMAGEN) objeto;
+                    if (objeto instanceof IMAGEN imagen) {
                         imagen.TratarArchivo(2, null); // Llamar al método de IMAGEN
-                    } else if (objeto instanceof VIDEO) {
-                        VIDEO video = (VIDEO) objeto;
+                    } else if (objeto instanceof VIDEO video) {
                         video.TratarArchivo(2, null); // Llamar al método de VIDEO
+                    } else if (objeto instanceof MUSICA musica) {
+                        musica.TratarArchivo(2, null); // Llamar al método de MUSICA
                     } else {
                         JOptionPane.showMessageDialog(this, "El componente seleccionado no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -635,28 +761,78 @@ public class UI extends JFrame {
     }
 
     public void actualizarMenus() {
-        boolean hayContenido = jTabbedPane1.getTabCount() > 1; // La primera pestaña es la de arrastrar/examinar
+        int selectedIndex = jTabbedPane1.getSelectedIndex();
+        Component selectedComponent = null;
+        if (selectedIndex != -1) {
+            selectedComponent = jTabbedPane1.getComponentAt(selectedIndex);
+        }
 
-        if (jTabbedPane1.getSelectedIndex() == 0) {
+        // Menús siempre visibles
+        M_Archivos.setVisible(true);
+        Ayuda.setVisible(true);
+
+        // Ocultar por defecto menús/ítems que dependen del contenido
+        Editar.setVisible(false);
+        Archivos_addFav.setVisible(false);
+
+        // Habilitar por defecto los ítems generales de Archivos
+        Archivos_abrirFichero.setEnabled(true);
+        Archicos_recientes.setEnabled(true);
+        Archivos_cargarPlaylist.setEnabled(true);
+        Archivo_FAVORITOS.setEnabled(true);
+        Archivos_cargarAlbum.setEnabled(true);
+
+        // Si estamos en la pestaña de bienvenida (índice 0), no mostrar Editar ni "Añadir a Favoritos"
+        if (selectedIndex == 0 || selectedComponent == jPanel1) {
             Editar.setVisible(false);
             Archivos_addFav.setVisible(false);
-        } else {
-            Editar.setVisible(hayContenido);
-            Archivos_addFav.setVisible(hayContenido);
-            Archivos_guardarFichero.setVisible(false);
 
-            if (PANELMAP.get(jTabbedPane1.getSelectedComponent()) instanceof IMAGEN) {
-                Editar_AddCaratula.setEnabled(false);
-                Editar_AddPlaylist.setEnabled(false);
-                Editar_AddAlbum.setEnabled(true);
-            } else if (PANELMAP.get(jTabbedPane1.getSelectedComponent()) instanceof VIDEO) {
-                Editar_AddCaratula.setEnabled(false);
-                Editar_AddPlaylist.setEnabled(false);
-                Editar_AddAlbum.setEnabled(false);
-            } else {
-                Editar_AddCaratula.setEnabled(false);
-                Editar_AddPlaylist.setEnabled(true);
-                Editar_AddAlbum.setEnabled(false);
+            // Opcional: deshabilitar ítems de Editar por claridad
+            Editar_CambiarNombre.setEnabled(false);
+            Editar_ModMetadatos.setEnabled(false);
+            Editar_AddCaratula.setEnabled(false);
+            Editar_AddPlaylist.setEnabled(false);
+            Editar_AddAlbum.setEnabled(false);
+
+            return; // Nada más que hacer
+        }
+
+        // Si hay una pestaña de contenido multimedia
+        if (selectedComponent != null) {
+            Object mediaObject = PANELMAP.get(selectedComponent);
+
+            // Mostrar menú Editar y "Añadir a Favoritos" solo si hay contenido multimedia
+            Editar.setVisible(true);
+            Archivos_addFav.setVisible(true);
+
+            // Resetear visibilidad/habilitación de ítems de Editar
+            Editar_CambiarNombre.setEnabled(false);
+            Editar_ModMetadatos.setEnabled(false);
+            Editar_AddCaratula.setVisible(false);
+            Editar_AddPlaylist.setVisible(false);
+            Editar_AddAlbum.setVisible(false);
+
+            if (mediaObject instanceof MUSICA) {
+                Editar_CambiarNombre.setEnabled(true);
+                Editar_ModMetadatos.setEnabled(true);
+                Editar_AddCaratula.setVisible(true);
+                Editar_AddPlaylist.setVisible(true);
+                // El álbum no aplica para música
+                Editar_AddAlbum.setVisible(false);
+            } else if (mediaObject instanceof VIDEO) {
+                Editar_CambiarNombre.setEnabled(true);
+                Editar_ModMetadatos.setEnabled(true);
+                // No tiene carátula ni playlist ni álbum
+                Editar_AddCaratula.setVisible(false);
+                Editar_AddPlaylist.setVisible(false);
+                Editar_AddAlbum.setVisible(false);
+            } else if (mediaObject instanceof IMAGEN) {
+                Editar_CambiarNombre.setEnabled(true);
+                Editar_ModMetadatos.setEnabled(true);
+                // Solo álbum para imágenes
+                Editar_AddCaratula.setVisible(false);
+                Editar_AddPlaylist.setVisible(false);
+                Editar_AddAlbum.setVisible(true);
             }
         }
     }
@@ -749,11 +925,10 @@ public class UI extends JFrame {
             IMAGEN imagen = new IMAGEN(UI.this);
             JPanel panel = imagen.img(new File(lineas.get(1)));
             PANELMAP.put(panel,imagen);
-            Component contenido = panel;
-            if (contenido instanceof JComponent) {
-                ((JComponent) contenido).putClientProperty("tituloReal", "Album  " + archivo.getName());
+                if (panel instanceof JComponent) {
+                ((JComponent) panel).putClientProperty("tituloReal", "Album  " + archivo.getName());
             }
-            jTabbedPane1.addTab(null, contenido);
+            jTabbedPane1.addTab(null, panel);
             jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                     new PestanaConCerrar(jTabbedPane1, "Album "+lineas.get(0).split("=")[1], UI.this::actualizarMenus));
             } catch (Exception e) {
@@ -761,6 +936,43 @@ public class UI extends JFrame {
             }
         }
 
+        if(archivo.getName().endsWith(".pylist")){
+            try {
+                java.util.List<String> lineas = Files.readAllLines(archivo.toPath());
+                if(abiertomusica){
+                    for(int i =1;i<lineas.size();i++){
+                        File archivos = new File(lineas.get(i));
+                        if (archivos.exists()) {
+                            musica.addMusica(archivos);
+                        } else {
+                            JOptionPane.showMessageDialog(null,"El fichero "+ archivos.getName() +" no existe o bien ha cambiado de ruta ","Error",JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }else{
+                    abiertomusica = true;
+                    MUSICA musica = new MUSICA(videosAbiertos,this);
+                    JPanel panel = musica.AUDIO(new File(lineas.get(1)),ArchivoAbierto);
+                    PANELMAP.put(panel,musica);
+                    if (panel instanceof JComponent) {
+                        ((JComponent) panel).putClientProperty("MUSICA", "Playlist  " + archivo.getName());
+                    }
+                    jTabbedPane1.addTab(null, panel);
+                    jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
+                            new PestanaConCerrar(jTabbedPane1, "Playlist "+lineas.get(0).split("=")[1], UI.this::actualizarMenus));
+
+                    for(int i =1;i<lineas.size();i++){
+                        File archivos = new File(lineas.get(i));
+                        if (archivos.exists()) {
+                            musica.addMusica(archivos);
+                        } else {
+                            JOptionPane.showMessageDialog(null,"El fichero "+ archivos.getName() +" no existe o bien ha cambiado de ruta ","Error",JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null,"Error en la apertura de la playlist" ,"Error",JOptionPane.ERROR_MESSAGE);
+            }
+        }
 
 
     }
@@ -786,9 +998,14 @@ public class UI extends JFrame {
             if (filePath.endsWith(".mp3") || filePath.endsWith(".wav") || filePath.endsWith(".flac")) {
                 if (!abiertomusica) {
                     abiertomusica = true;
-                    musica = new Multimedia.Musica1();
-                    Component contenido = musica.AUDIO(file, ArchivoAbierto);
-                    jTabbedPane1.addTab(null, contenido);
+                    MUSICA musica = new MUSICA(videosAbiertos,this);
+                    addReciente(file);
+                    JPanel panel = musica.AUDIO(file,ArchivoAbierto);
+                    PANELMAP.put(panel,musica);
+                    if (panel instanceof JComponent) {
+                        ((JComponent) panel).putClientProperty("tituloReal", "Musica " + file.getName());
+                    }
+                    jTabbedPane1.addTab(null,panel);
                     jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                             new PestanaConCerrar(jTabbedPane1, "Musica", () -> {
                                 abiertomusica = false;
@@ -798,7 +1015,7 @@ public class UI extends JFrame {
                     if (musica != null) {
                         musica.addMusica(file);
                     } else {
-                        musica = new Multimedia.Musica1();
+                        musica = new MUSICA(videosAbiertos,this);
                         Component contenido = musica.AUDIO(file, ArchivoAbierto);
                         jTabbedPane1.addTab(null, contenido);
                         jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
@@ -810,15 +1027,15 @@ public class UI extends JFrame {
                 }
             } else if (filePath.endsWith(".mp4") || filePath.endsWith(".avi") || filePath.endsWith(".mkv")) {
                 VIDEO video = new VIDEO(this);
+                videosAbiertos.add(video);
                 addReciente(file);
                 JPanel panel = video.getVideo(file);
                 PANELMAP.put(panel,video);
-                Component contenido = panel;
-                if (contenido instanceof JComponent) {
-                    ((JComponent) contenido).putClientProperty("tituloReal", "Video " + file.getName());
+                if (panel instanceof JComponent) {
+                    ((JComponent) panel).putClientProperty("tituloReal", "Video " + file.getName());
                 }
                 addReciente(file);
-                jTabbedPane1.addTab(null, contenido);
+                jTabbedPane1.addTab(null, panel);
                 jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                         new PestanaConCerrar(jTabbedPane1, "Video" + file.getName(), UI.this::actualizarMenus));
             } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png") || filePath.endsWith(".gif")) {
@@ -826,11 +1043,10 @@ public class UI extends JFrame {
                 addReciente(file);
                 JPanel panel = imagen.img(file);
                 PANELMAP.put(panel,imagen);
-                Component contenido = panel;
-                if (contenido instanceof JComponent) {
-                    ((JComponent) contenido).putClientProperty("tituloReal", "Imagen " + file.getName());
+                if (panel instanceof JComponent) {
+                    ((JComponent) panel).putClientProperty("tituloReal", "Imagen " + file.getName());
                 }
-                jTabbedPane1.addTab(null, contenido);
+                jTabbedPane1.addTab(null, panel);
                 jTabbedPane1.setTabComponentAt(jTabbedPane1.getTabCount() - 1,
                         new PestanaConCerrar(jTabbedPane1, "Imagen "+file.getName(), UI.this::actualizarMenus));
 
@@ -843,47 +1059,55 @@ public class UI extends JFrame {
 
     }
 
-   private void addReciente(File archivoSeleccionado) {
-       try {
-           // Leer las líneas existentes en el archivo recientes.txt
-           File archivoRecientes = new File("recientes.txt");
-           java.util.List<String> lineasExistentes = archivoRecientes.exists()
-                   ? Files.readAllLines(archivoRecientes.toPath())
-                   : new java.util.ArrayList<>();
+    private void cargarArchivosRecientes() {
+        try {
+            File archivoRecientes = new File("recientes.txt");
+            Archicos_recientes.removeAll(); // Limpia los elementos previos del menú
 
-           // Verificar si la ruta ya existe y eliminarla si está presente
-           String nuevaRuta = archivoSeleccionado.getAbsolutePath();
-           lineasExistentes.remove(nuevaRuta);
+            if (archivoRecientes.exists()) {
+                List<String> lineasExistentes = Files.readAllLines(archivoRecientes.toPath());
+                // Asegurar que solo se procesan hasta 5, en caso de que el archivo tenga más
+                List<String> lineasAMostrar = lineasExistentes.size() > 5 ? lineasExistentes.subList(0, 5) : lineasExistentes;
 
-           // Añadir la nueva ruta al inicio de la lista
-           lineasExistentes.add(0, nuevaRuta);
+                for (String linea : lineasAMostrar) {
+                    if (linea != null && !linea.trim().isEmpty()) {
+                        File file = new File(linea.trim());
+                        JMenuItem menuItem = new JMenuItem(file.getName()); // Mostrar solo el nombre del archivo
+                        menuItem.setToolTipText(file.getAbsolutePath());   // Ruta completa como tooltip
+                        menuItem.addActionListener(ef -> abrirFichero(file));
+                        Archicos_recientes.add(menuItem);
+                    }
+                }
+            }
 
-           // Limitar la lista a los últimos 5 elementos
-           if (lineasExistentes.size() > 5) {
-               lineasExistentes = lineasExistentes.subList(0, 5);
-           }
+            Archicos_recientes.revalidate();
+            Archicos_recientes.repaint();
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar archivos recientes: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
-           // Escribir la lista actualizada en el archivo
-           try (FileWriter fw = new FileWriter(archivoRecientes, false)) { // Sobrescribir el archivo
-               for (String linea : lineasExistentes) {
-                   fw.write(linea + "\n");
-               }
-           }
+    private void addReciente(File archivoSeleccionado) {
+        try {
+            File archivoRecientes = new File("recientes.txt");
+            List<String> lineasExistentes = archivoRecientes.exists()
+                    ? Files.readAllLines(archivoRecientes.toPath())
+                    : new ArrayList<>();
 
-           // Actualizar el menú de archivos recientes
-           Archicos_recientes.removeAll(); // Limpia los elementos previos del menú
-           lineasExistentes.forEach(linea -> {
-               JMenuItem menuItem = new JMenuItem(linea);
-               menuItem.addActionListener(ef -> abrirFichero(new File(linea)));
-               Archicos_recientes.add(menuItem);
-           });
+            String nuevaRuta = archivoSeleccionado.getAbsolutePath();
+            lineasExistentes.removeIf(ruta -> ruta.equals(nuevaRuta)); // Eliminar todas las ocurrencias para moverla al principio
+            lineasExistentes.add(0, nuevaRuta);
 
-           Archicos_recientes.revalidate(); // Actualiza el menú
-           Archicos_recientes.repaint();
-       } catch (IOException ex) {
-           JOptionPane.showMessageDialog(null, "Error al manejar archivos recientes: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-       }
-   }
+            if (lineasExistentes.size() > 5) {
+                lineasExistentes = lineasExistentes.subList(0, 5);
+            }
+
+            Files.write(archivoRecientes.toPath(), lineasExistentes); // Escribir la lista actualizada
+            cargarArchivosRecientes(); // Actualizar el menú
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar archivo reciente: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     public void addFavoritos(File f) {
         try {
@@ -988,8 +1212,7 @@ public class UI extends JFrame {
         return new ImageIcon(image);
     }
 
-    private static final int MAX_TEXTO_ARCHIVO = 40; // o el valor que prefieras
-    private static final int MAX_TEXTO_TAB = 15;
+    private static final int MAX_TEXTO_ARCHIVO = 40;
 
     private String acortarTexto(String texto, int max) {
         if (texto.length() > max) {
@@ -998,13 +1221,4 @@ public class UI extends JFrame {
         return texto;
     }
 
-    private String acortarTituloTab(String titulo) {
-        if (titulo.length() > MAX_TEXTO_TAB) {
-            return titulo.substring(0, MAX_TEXTO_TAB - 3) + "...";
-        }
-        return titulo;
-    }
-
-};
-
-
+}

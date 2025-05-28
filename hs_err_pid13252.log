@@ -1,0 +1,61 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  SIGSEGV (0xb) at pc=0x000079eb9ed2578f, pid=13252, tid=13801
+#
+# JRE version: Java(TM) SE Runtime Environment Oracle GraalVM 21.0.6+8.1 (21.0.6+8) (build 21.0.6+8-LTS-jvmci-23.1-b55)
+# Java VM: Java HotSpot(TM) 64-Bit Server VM Oracle GraalVM 21.0.6+8.1 (21.0.6+8-LTS-jvmci-23.1-b55, mixed mode, sharing, tiered, jvmci, jvmci compiler, compressed oops, compressed class ptrs, g1 gc, linux-amd64)
+# Problematic frame:
+# C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x12578f]
+#
+# Core dump will be written. Default location: Core dumps may be processed with "/usr/share/apport/apport -p%p -s%s -c%c -d%d -P%P -u%u -g%g -- %E" (or dumping to /home/david/Escritorio/MultiStudio/core.13252)
+#
+# If you would like to submit a bug report, please visit:
+#   https://bugreport.java.com/bugreport/crash.jsp
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -XX:ThreadPriorityPolicy=1 -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCIProduct -XX:-UnlockExperimentalVMOptions -javaagent:/snap/intellij-idea-ultimate/604/lib/idea_rt.jar=42419 -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 es.ujaen.sistemasmultimedia.Main
+
+Host: 12th Gen Intel(R) Core(TM) i7-12650H, 16 cores, 15G, Ubuntu 24.04.2 LTS
+Time: Wed May 28 00:44:11 2025 CEST elapsed time: 48.015408 seconds (0d 0h 0m 48s)
+
+---------------  T H R E A D  ---------------
+
+Current thread is native thread
+
+Stack: [0x00007a0448b38000,0x00007a0448c38000],  sp=0x00007a0448c36230,  free space=1016k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x12578f]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x15b527]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x1bb7e7]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x1bb825]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x1a679b]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x17805a]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x17b5a3]
+C  [libgallium-24.2.8-1ubuntu1~24.04.1.so+0x181d59]
+
+siginfo: si_signo: 11 (SIGSEGV), si_code: 1 (SEGV_MAPERR), si_addr: 0x000079edce9f9cb0
+
+Registers:
+RAX=0x000079ebb0007658, RBX=0x00000000169bf6ee, RCX=0x00000000169bf6ee, RDX=0x0000000000000000
+RSP=0x00007a0448c36230, RBP=0x00007a0448c36270, RSI=0x0000000043d3e4ca, RDI=0x000079eba8857cd0
+R8 =0x00000000800b2030, R9 =0x0000000000000000, R10=0x0000000000000000, R11=0x0000000000000010
+R12=0x000079edce9f9ca8, R13=0x0000000000000001, R14=0x000079eba8857cd0, R15=0x00000000b00bcbb8
+RIP=0x000079eb9ed2578f, EFLAGS=0x0000000000010206, CSGSFS=0x002b000000000033, ERR=0x0000000000000004
+  TRAPNO=0x000000000000000e
+
+
+Top of Stack: (sp=0x00007a0448c36230)
+0x00007a0448c36230:   00000000800b2030 00007a042c2ad17c
+0x00007a0448c36240:   00007a0448c362b0 00000000800b2030
+0x00007a0448c36250:   0000000000001903 00007a042c322240
+0x00007a0448c36260:   00007a042c29e310 0000000000000031
+0x00007a0448c36270:   00007a0448c36290 000079eb9ed5b527
+0x00007a0448c36280:   00007a042c322240 00007a042c29e310
+0x00007a0448c36290:   00007a0448c362c0 000079eb9edbb7e7
+0x00007a0448c362a0:   00007a0448c362f0 000014019fc7b46a
+0x00007a0448c362b0:   00007a042c359ee0 0000000000000000
+0x00007a0448c362c0:   00007a0448c362f0 000079eb9edbb825
+0x00007a0448c362d0:   

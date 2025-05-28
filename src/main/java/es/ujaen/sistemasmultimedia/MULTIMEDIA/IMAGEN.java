@@ -2,7 +2,7 @@ package es.ujaen.sistemasmultimedia.MULTIMEDIA;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.*;
 import com.drew.metadata.exif.*;
-import es.ujaen.sistemasmultimedia.UI;
+import es.ujaen.sistemasmultimedia.INTERFAZ.UI;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.RationalNumber;
@@ -14,8 +14,6 @@ import org.apache.commons.imaging.formats.tiff.write.*;
 import javax.imageio.*;
 import javax.imageio.metadata.*;
 import javax.imageio.stream.ImageOutputStream;
-
-import org.w3c.dom.*;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
